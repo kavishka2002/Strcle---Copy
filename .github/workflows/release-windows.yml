@@ -50,18 +50,41 @@ jobs:
           test -s "$manifest"
           cp "$installer" "$safe_installer"
           cp "$blockmap" "$safe_blockmap"
+          test -s "$safe_installer"
+          test -s "$safe_blockmap"
           RELEASE_VERSION="$version" node -e '
             const fs = require("node:fs");
-            const [manifestPath, installerName] = process.argv.slice(1);
-            const lines = fs.readFileSync(manifestPath, "utf8").split(/\r?\n/);
-            if (!lines.includes(`version: ${process.env.RELEASE_VERSION}`) ||
-                !lines.includes(`path: ${installerName}`) ||
-                !lines.some(line => line.trim() === `- url: ${installerName}`)) {
-              throw new Error("latest.yml does not match the installer and package version.");
+            const crypto = require("node:crypto");
+            const [manifestPath, installerPath, installerName] = process.argv.slice(1);
+            async function validate() {
+              const manifest = fs.readFileSync(manifestPath, "utf8");
+              const scalar = key => {
+                const match = manifest.match(new RegExp(`^${key}: (.+)$`, "m"));
+                return match?.[1];
+              };
+              const fileSize = manifest.match(/^\s+size: (\d+)$/m)?.[1];
+              const actualSize = fs.statSync(installerPath).size;
+              const hash = crypto.createHash("sha512");
+              await new Promise((resolve, reject) => {
+                const stream = fs.createReadStream(installerPath);
+                stream.on("data", chunk => hash.update(chunk));
+                stream.once("error", reject);
+                stream.once("end", resolve);
+              });
+              const actualSha512 = hash.digest("base64");
+              if (scalar("version") !== process.env.RELEASE_VERSION ||
+                  scalar("path") !== installerName ||
+                  !manifest.split(/\r?\n/).some(line => line.trim() === `- url: ${installerName}`) ||
+                  fileSize !== String(actualSize) ||
+                  scalar("sha512") !== actualSha512) {
+                throw new Error("latest.yml does not match the installer version, filename, size, and SHA-512.");
+              }
             }
-          ' "$manifest" "$(basename "$safe_installer")"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            validate().catch(error => {
+              console.error(error);
+              process.exitCode = 1;
+            });
+          ' "$manifest" "$safe_installer" "$(basename "$safe_installer")"
 
       - name: Create draft release
         shell: bash
