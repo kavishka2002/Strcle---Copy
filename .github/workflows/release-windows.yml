@@ -30,19 +30,76 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and publish Windows installer
-        run: npm run desktop:release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Windows installer without publishing
+        shell: bash
+        run: |
+          npm run desktop:build
+          npx electron-builder --win nsis --publish never
 
-      - name: Publish NSIS differential update blockmap
+      - name: Prepare and validate update assets
         shell: bash
         run: |
           version="$(node -p 'require("./package.json").version')"
-          blockmap="release/LittlePaper Setup ${version}.exe.blockmap"
-          safe_blockmap="release/LittlePaper-Setup-${version}.exe.blockmap"
-          test -f "$blockmap"
+          installer="release/LittlePaper Setup ${version}.exe"
+          blockmap="${installer}.blockmap"
+          safe_installer="release/LittlePaper-Setup-${version}.exe"
+          safe_blockmap="${safe_installer}.blockmap"
+          manifest="release/latest.yml"
+          test -s "$installer"
+          test -s "$blockmap"
+          test -s "$manifest"
+          cp "$installer" "$safe_installer"
           cp "$blockmap" "$safe_blockmap"
-          gh release upload "$GITHUB_REF_NAME" "$safe_blockmap" --clobber --repo "$GITHUB_REPOSITORY"
+          RELEASE_VERSION="$version" node -e '
+            const fs = require("node:fs");
+            const [manifestPath, installerName] = process.argv.slice(1);
+            const lines = fs.readFileSync(manifestPath, "utf8").split(/\r?\n/);
+            if (!lines.includes(`version: ${process.env.RELEASE_VERSION}`) ||
+                !lines.includes(`path: ${installerName}`) ||
+                !lines.some(line => line.trim() === `- url: ${installerName}`)) {
+              throw new Error("latest.yml does not match the installer and package version.");
+            }
+          ' "$manifest" "$(basename "$safe_installer")"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create draft release
+        shell: bash
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --draft \
+            --verify-tag \
+            --title "LittlePaper $GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload update assets to draft release
+        shell: bash
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          gh release upload "$GITHUB_REF_NAME" \
+            "release/LittlePaper-Setup-${version}.exe" \
+            "release/latest.yml" \
+            "release/LittlePaper-Setup-${version}.exe.blockmap" \
+            --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify release assets before publishing
+        shell: bash
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          assets="$(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name' --repo "$GITHUB_REPOSITORY")"
+          for asset in \
+            "LittlePaper-Setup-${version}.exe" \
+            "latest.yml" \
+            "LittlePaper-Setup-${version}.exe.blockmap"; do
+            if ! grep -Fxq "$asset" <<< "$assets"; then
+              echo "Required release asset is missing: $asset" >&2
+              exit 1
+            fi
+          done
+          gh release edit "$GITHUB_REF_NAME" --draft=false --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

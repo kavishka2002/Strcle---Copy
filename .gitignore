@@ -7,3 +7,10 @@ release/
 *.tsbuildinfo
 .env*
 .git-backup/
+
+# Generated desktop build files
+.audit-release/
+release/
+dist/
+
+.audit-release/
