@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Nexora Labs</title>
+  <desc id="description">Nexora Labs technology and growth logo</desc>
+  <defs>
+    <radialGradient id="background" cx="42%" cy="34%" r="72%">
+      <stop offset="0" stop-color="#12364a"/>
+      <stop offset="1" stop-color="#061126"/>
+    </radialGradient>
+    <linearGradient id="signal" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#4858f2"/>
+      <stop offset="1" stop-color="#00d4ed"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <circle cx="256" cy="256" r="238" fill="url(#background)" stroke="#527acb" stroke-width="10"/>
+  <circle cx="256" cy="256" r="226" fill="none" stroke="#35d4e8" stroke-opacity=".8" stroke-width="3"/>
+  <g fill="none" stroke="url(#signal)" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+    <path d="M174 278V129l78 69 95-84-5-25 45-7-8 45-20-12-105 94-49-42v91l-31 20z" stroke-width="12"/>
+    <path d="M174 278l39-24v-43m0-82v39l22 18m81 14v43l24 17m0-72v-35" stroke-width="8"/>
+    <path d="M174 278l78 56 87-77v-20m-87-39v57" stroke-width="10"/>
+  </g>
+  <g fill="#61e7fa" filter="url(#glow)">
+    <circle cx="213" cy="211" r="9"/>
+    <circle cx="294" cy="255" r="8"/>
+    <circle cx="382" cy="88" r="9"/>
+  </g>
+  <text x="256" y="370" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="700" letter-spacing="7" text-anchor="middle">NEXORA</text>
+  <text x="256" y="421" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="33" font-weight="500" letter-spacing="15" text-anchor="middle">LABS</text>
+</svg>

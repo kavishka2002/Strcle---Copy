@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.next-desktop/
+out/
+coverage/
+release/
+*.tsbuildinfo
+.env*
+.git-backup/

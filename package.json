@@ -1,0 +1,93 @@
+{
+  "name": "lanka-sticker-studio",
+  "version": "1.0.0",
+  "private": true,
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "desktop:prepare": "node scripts/prepare-desktop.mjs",
+    "desktop:build": "node scripts/build-desktop.mjs",
+    "desktop:start": "electron .",
+    "desktop:dev": "npm run desktop:build && npm run desktop:start",
+    "desktop:installer": "npm run desktop:build && electron-builder --win nsis",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/abhaya-libre": "^5.3.0",
+    "@fontsource/baloo-2": "^5.3.0",
+    "@fontsource/dm-sans": "^5.3.0",
+    "@fontsource/fredoka": "^5.3.0",
+    "@fontsource/gemunu-libre": "^5.3.0",
+    "@fontsource/inter": "^5.2.6",
+    "@fontsource/lato": "^5.3.0",
+    "@fontsource/lora": "^5.3.0",
+    "@fontsource/montserrat": "^5.3.0",
+    "@fontsource/noto-sans-sinhala": "^5.2.6",
+    "@fontsource/noto-serif-sinhala": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0",
+    "@fontsource/poppins": "^5.3.0",
+    "@fontsource/quicksand": "^5.3.0",
+    "@fontsource/roboto": "^5.3.0",
+    "@fontsource/yaldevi": "^5.3.0",
+    "lucide-react": "^0.468.0",
+    "next": "^16.4.2",
+    "pdfjs-dist": "^4.10.38",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "singlish-sinhala": "^0.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.10",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "electron": "^41.7.1",
+    "electron-builder": "^26.18.0",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.4.2",
+    "postcss": "^8.5.23",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "build": {
+    "appId": "lk.littlepaper.desktop",
+    "productName": "LittlePaper",
+    "artifactName": "${productName} Setup ${version}.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      ".next-desktop/littlepaper.ico",
+      ".next-desktop/standalone/**/*",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "asar": false,
+    "win": {
+      "icon": ".next-desktop/littlepaper.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
