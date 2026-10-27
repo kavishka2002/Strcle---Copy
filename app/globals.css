@@ -2082,6 +2082,47 @@ button { cursor: pointer; }
   html[data-theme="dark"] .coloring-library > section:first-child form input::placeholder { color: #a4b2ad; opacity: 1; }
   html[data-theme="dark"] .auth-card,
   html[data-theme="dark"] .auth-about-dialog { border-color: #354345; background: #1a2325; color: #e1e9e7; }
+  .desktop-update-backdrop { position: fixed; inset: 0; z-index: 220; display: grid; place-items: center; overflow-y: auto; padding: 18px; background: rgb(22 37 33 / 55%); backdrop-filter: blur(5px); }
+  .desktop-update-dialog { position: relative; width: min(100%, 500px); max-height: min(90vh, 760px); overflow-y: auto; border: 1px solid #e1ebe4; border-radius: 22px; background: linear-gradient(155deg, #fff 10%, #f5f8f4 100%); padding: 30px; color: #293c3b; box-shadow: 0 28px 90px rgb(18 40 33 / 28%); }
+  .desktop-update-close { position: absolute; top: 14px; right: 14px; display: grid; width: 35px; height: 35px; place-items: center; border: 1px solid #e1e9e3; border-radius: 10px; background: #fff; color: #5d7469; }
+  .desktop-update-close:hover { background: #f0f7f1; }
+  .desktop-update-icon { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 15px; background: #e7f2eb; color: #397b68; }
+  .desktop-update-eyebrow { margin-top: 21px; color: #397b68; font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+  .desktop-update-dialog h2 { margin-top: 5px; color: #26394a; font-size: 24px; font-weight: 750; letter-spacing: -.5px; }
+  .desktop-update-description { margin-top: 10px; color: #65756e; font-size: 13px; line-height: 1.65; }
+  .desktop-update-versions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+  .desktop-update-versions span { display: grid; gap: 5px; border: 1px solid #e6ece7; border-radius: 12px; background: #fff; padding: 11px 12px; color: #718078; font-size: 10px; }
+  .desktop-update-versions b { color: #30463c; font-size: 13px; }
+  .desktop-update-notes { margin-top: 16px; border-radius: 12px; background: #eff5f0; padding: 12px; color: #52675c; font-size: 11px; line-height: 1.6; }
+  .desktop-update-notes p { margin-top: 4px; white-space: pre-line; }
+  .desktop-update-download { display: grid; gap: 8px; margin-top: 16px; color: #52675c; font-size: 11px; }
+  .desktop-update-progress { display: block; width: 100%; height: 8px; overflow: hidden; appearance: none; border: 0; border-radius: 99px; background: #e3ebe5; }
+  .desktop-update-progress::-webkit-progress-bar { border-radius: 99px; background: #e3ebe5; }
+  .desktop-update-progress::-webkit-progress-value { border-radius: 99px; background: #397b68; transition: width .2s ease; }
+  .desktop-update-progress::-moz-progress-bar { border-radius: 99px; background: #397b68; }
+  .desktop-update-ready { margin-top: 14px; color: #397b68; font-size: 11px; }
+  .desktop-update-error { margin-top: 14px; color: #a63d3d; font-size: 11px; line-height: 1.5; }
+  .desktop-update-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; margin-top: 22px; }
+  .desktop-update-actions button:focus-visible,
+  .desktop-update-close:focus-visible { outline: 3px solid #98c6a8; outline-offset: 3px; }
+  html[data-theme="dark"] .desktop-update-dialog { border-color: #354744; background: linear-gradient(155deg, #1d2929 10%, #192322 100%); color: #dce6e3; }
+  html[data-theme="dark"] .desktop-update-dialog h2 { color: #e6efeb; }
+  html[data-theme="dark"] .desktop-update-description,
+  html[data-theme="dark"] .desktop-update-download { color: #aab9b2; }
+  html[data-theme="dark"] .desktop-update-versions span { border-color: #364643; background: #202c2b; color: #aab9b2; }
+  html[data-theme="dark"] .desktop-update-versions b { color: #e1e9e7; }
+  html[data-theme="dark"] .desktop-update-notes { background: #24352e; color: #c1d0c7; }
+  html[data-theme="dark"] .desktop-update-close { border-color: #3a4948; background: #202b2c; color: #c4d1cd; }
+  html[data-theme="dark"] .desktop-update-card { border-color: #303d3e; background: #1a2325; }
+  @media (max-width: 520px) {
+    .desktop-update-dialog { padding: 24px 19px; }
+    .desktop-update-versions { grid-template-columns: 1fr; }
+    .desktop-update-actions { flex-direction: column; }
+    .desktop-update-actions button { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .desktop-update-progress::-webkit-progress-value { transition: none; }
+  }
   html[data-theme="dark"] .auth-card-brand strong,
   html[data-theme="dark"] .auth-welcome h1,
   html[data-theme="dark"] .auth-about-dialog h2 { color: #e1e9e7; }

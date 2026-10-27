@@ -33,6 +33,7 @@ import { DocumentLibrary } from "@/components/document-library";
 import { SinhalaHodiya } from "@/components/sinhala-hodiya";
 import { LanguageToggle, LocalizedUi, ThemeToggle } from "@/components/app-language";
 import { AppToast } from "@/components/app-toast";
+import { DesktopUpdateManager } from "@/components/desktop-update-manager";
 import { useAppDialog } from "@/components/app-dialog";
 import { useTrialAccess } from "@/components/trial-access";
 import { printCurrentPage } from "@/lib/print-page";
@@ -1441,7 +1442,7 @@ export function StickerStudio() {
     </aside>
     {isMobileNavOpen && <button aria-label="Close menu" data-trial-allow className="mobile-overlay" onClick={() => setMobileNavOpen(false)}/>}
     <main className="main-column"><header className="topbar no-print"><div className="flex min-w-0 items-center gap-3"><button className="secondary-button !px-3 !py-2" aria-label="Back to previous section" disabled={section === "Home" && sectionHistory.length === 0} onClick={goBack}><ArrowLeft size={14}/>Back</button><button className="menu-button" data-trial-allow aria-label="Open navigation" onClick={() => setMobileNavOpen(true)}><Menu size={19}/></button><div className="breadcrumb truncate">Your bookshop <span>/</span> <b>{section}</b></div></div><div className="flex items-center gap-3"><span className="saved-indicator"><span/> Everything stays on this device</span><ThemeToggle/><LanguageToggle/><button className="top-new" data-trial-allow onClick={() => { setDesign(null); setGeneratedBatch([]); changeSection("Create sticker"); }}><Plus size={15}/> New design</button></div></header>
-      <div className="main-content" data-trial-allow={isTrial && section === "Create sticker" ? "" : undefined}>{isTrial && section === "Create sticker" && <p className="mb-4 rounded-xl border border-[#e5dced] bg-[#fbf9ff] px-4 py-3 text-xs leading-5 text-[#66558b]">Free trial: create and preview name stickers. Printing and Past Paper Finder require full access.</p>}{content()}</div>
+      <div className="main-content" data-trial-allow={isTrial && section === "Create sticker" ? "" : undefined}>{isTrial && section === "Create sticker" && <p className="mb-4 rounded-xl border border-[#e5dced] bg-[#fbf9ff] px-4 py-3 text-xs leading-5 text-[#66558b]">Free trial: create and preview name stickers. Printing and Past Paper Finder require full access.</p>}{content()}<DesktopUpdateManager showSettings={section === "Settings"} showPrompt={false}/></div>
       <div className="app-toast-stack no-print">
         {error && <AppToast key={`error-${error}`} variant="error" message={error} onClose={() => setError("")}/>}
         {message && <AppToast key={`success-${message}`} variant="success" message={message} onClose={() => setMessage("")}/>}

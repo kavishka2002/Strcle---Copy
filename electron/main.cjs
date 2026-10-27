@@ -1,4 +1,5 @@
 const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
+const { autoUpdater } = require("electron-updater");
 const { randomUUID } = require("node:crypto");
 const { spawn } = require("node:child_process");
 const { createServer } = require("node:net");
@@ -7,11 +8,17 @@ const path = require("node:path");
 
 const SERVER_HOST = "127.0.0.1";
 const SERVER_PORT_FILE = "next-server-port";
+const UPDATE_PREFERENCES_FILE = "update-preferences.json";
 const STARTUP_TIMEOUT_MS = 60_000;
 const STARTUP_POLL_MS = 250;
+const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 app.setName("LittlePaper");
 app.setAppUserModelId("lk.littlepaper.desktop");
+
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = false;
+autoUpdater.allowPrerelease = false;
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -23,6 +30,142 @@ if (!app.requestSingleInstanceLock()) {
   let serverFailure;
   let serverOutput = "";
   let appOrigin;
+  let updateCheckInterval;
+  let updateCheckInProgress;
+  let manualUpdateCheckRequested = false;
+  let dismissedUpdateVersion = "";
+  let updateSnapshot = {
+    state: "idle",
+    currentVersion: app.getVersion(),
+    enabled: app.isPackaged && process.platform === "win32",
+    revision: 0
+  };
+
+  function publishUpdateState(nextState) {
+    updateSnapshot = {
+      ...updateSnapshot,
+      ...nextState,
+      currentVersion: app.getVersion(),
+      enabled: app.isPackaged && process.platform === "win32",
+      revision: updateSnapshot.revision + 1
+    };
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("update-status", updateSnapshot);
+    }
+    return updateSnapshot;
+  }
+
+  function releaseNotesText(releaseNotes) {
+    if (typeof releaseNotes === "string") return releaseNotes.trim().slice(0, 4000);
+    if (!Array.isArray(releaseNotes)) return "";
+    return releaseNotes
+      .map(note => typeof note === "string" ? note : note?.note)
+      .filter(note => typeof note === "string" && note.trim())
+      .join("\n\n")
+      .slice(0, 4000);
+  }
+
+  async function loadDismissedUpdateVersion() {
+    const preferencesPath = path.join(app.getPath("userData"), UPDATE_PREFERENCES_FILE);
+    try {
+      const preferences = JSON.parse(await readFile(preferencesPath, "utf8"));
+      if (typeof preferences.dismissedVersion === "string") {
+        dismissedUpdateVersion = preferences.dismissedVersion;
+      }
+    } catch (error) {
+      if (error?.code !== "ENOENT") {
+        console.error("Could not read the desktop update preferences.", error);
+      }
+    }
+  }
+
+  async function checkForUpdates(manual = false) {
+    if (!updateSnapshot.enabled) {
+      if (manual) publishUpdateState({ state: "disabled", notify: false });
+      return;
+    }
+
+    if (manual) manualUpdateCheckRequested = true;
+    if (updateCheckInProgress) return updateCheckInProgress;
+
+    updateCheckInProgress = (async () => {
+      publishUpdateState({
+        state: "checking",
+        latestVersion: undefined,
+        releaseNotes: undefined,
+        error: undefined,
+        notify: false
+      });
+      try {
+        await autoUpdater.checkForUpdates();
+      } catch (error) {
+        if (updateSnapshot.state !== "error") {
+          publishUpdateState({
+            state: "error",
+            error: error instanceof Error ? error.message : String(error),
+            notify: false
+          });
+        }
+        manualUpdateCheckRequested = false;
+      } finally {
+        updateCheckInProgress = undefined;
+      }
+    })();
+
+    return updateCheckInProgress;
+  }
+
+  autoUpdater.on("checking-for-update", () => {
+    publishUpdateState({ state: "checking", error: undefined, notify: false });
+  });
+  autoUpdater.on("update-available", info => {
+    const notify = manualUpdateCheckRequested || info.version !== dismissedUpdateVersion;
+    manualUpdateCheckRequested = false;
+    publishUpdateState({
+      state: "available",
+      latestVersion: info.version,
+      releaseNotes: releaseNotesText(info.releaseNotes),
+      error: undefined,
+      notify
+    });
+  });
+  autoUpdater.on("update-not-available", () => {
+    manualUpdateCheckRequested = false;
+    publishUpdateState({
+      state: "not-available",
+      latestVersion: undefined,
+      releaseNotes: undefined,
+      error: undefined,
+      notify: false
+    });
+  });
+  autoUpdater.on("download-progress", progress => {
+    publishUpdateState({
+      state: "downloading",
+      percent: Number.isFinite(progress.percent) ? progress.percent : 0,
+      transferred: progress.transferred,
+      total: progress.total,
+      notify: false
+    });
+  });
+  autoUpdater.on("update-downloaded", info => {
+    publishUpdateState({
+      state: "downloaded",
+      latestVersion: info.version,
+      releaseNotes: releaseNotesText(info.releaseNotes),
+      percent: 100,
+      error: undefined,
+      notify: false
+    });
+  });
+  autoUpdater.on("error", error => {
+    manualUpdateCheckRequested = false;
+    publishUpdateState({
+      state: "error",
+      error: error instanceof Error ? error.message : String(error),
+      notify: false
+    });
+  });
 
   function addServerOutput(chunk) {
     serverOutput = (serverOutput + chunk.toString()).slice(-8_000);
@@ -231,7 +374,7 @@ if (!app.requestSingleInstanceLock()) {
 
   function assertMainWindowSender(event) {
     if (!mainWindow || event.sender !== mainWindow.webContents) {
-      throw new Error("Print requests are only accepted from the LittlePaper window.");
+      throw new Error("Desktop requests are only accepted from the LittlePaper window.");
     }
   }
 
@@ -274,6 +417,48 @@ if (!app.requestSingleInstanceLock()) {
     return openPdfPreview(Buffer.from(pdfData));
   });
 
+  ipcMain.handle("get-update-info", event => {
+    assertMainWindowSender(event);
+    return updateSnapshot;
+  });
+
+  ipcMain.handle("check-for-updates", async event => {
+    assertMainWindowSender(event);
+    await checkForUpdates(true);
+    return { status: "checking" };
+  });
+
+  ipcMain.handle("download-update", async event => {
+    assertMainWindowSender(event);
+    if (!updateSnapshot.enabled || !updateSnapshot.latestVersion || !["available", "error"].includes(updateSnapshot.state)) {
+      throw new Error("There is no available update to download.");
+    }
+    await autoUpdater.downloadUpdate();
+    return { status: "downloaded" };
+  });
+
+  ipcMain.handle("install-update", event => {
+    assertMainWindowSender(event);
+    if (!updateSnapshot.enabled || updateSnapshot.state !== "downloaded") {
+      throw new Error("The update has not finished downloading.");
+    }
+    autoUpdater.quitAndInstall(false, true);
+    return { status: "installing" };
+  });
+
+  ipcMain.handle("dismiss-update", async (event, version) => {
+    assertMainWindowSender(event);
+    if (typeof version !== "string" || version !== updateSnapshot.latestVersion) {
+      throw new TypeError("A valid update version is required.");
+    }
+    const preferencesPath = path.join(app.getPath("userData"), UPDATE_PREFERENCES_FILE);
+    await mkdir(app.getPath("userData"), { recursive: true });
+    await writeFile(preferencesPath, JSON.stringify({ dismissedVersion: version }), "utf8");
+    dismissedUpdateVersion = version;
+    publishUpdateState({ notify: false });
+    return { status: "dismissed" };
+  });
+
   ipcMain.handle("print-resource", async (event, rawUrl) => {
     assertMainWindowSender(event);
     if (typeof rawUrl !== "string") throw new TypeError("A print resource URL is required.");
@@ -307,9 +492,14 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(async () => {
     try {
+      await loadDismissedUpdateVersion();
       const origin = await startNextServer();
       appOrigin = origin;
       await createMainWindow(origin);
+      if (updateSnapshot.enabled) {
+        void checkForUpdates();
+        updateCheckInterval = setInterval(() => void checkForUpdates(), UPDATE_CHECK_INTERVAL_MS);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await dialog.showMessageBox({
@@ -324,6 +514,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on("before-quit", () => {
     isQuitting = true;
+    if (updateCheckInterval) clearInterval(updateCheckInterval);
     if (serverProcess && !serverProcess.killed) serverProcess.kill();
   });
 

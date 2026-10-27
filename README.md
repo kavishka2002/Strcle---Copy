@@ -38,7 +38,43 @@ Local papers, artwork, fonts, and saved work are available without internet afte
 
 The **Sinhala Hodiya** section is available from the Production navigation. It includes the Sinhala vowels, consonants, and vowel-sign combinations, with optional Sinhala numerals, English letters, and English numbers. One font-size and tile-shape setting applies uniformly to every worksheet letter. Choose individual characters with their checkboxes and select **Print selected** to print only those letters (including just one), or choose **Print full Sinhala Hodiya** to print all Sinhala vowel, consonant, and combination sections without English or numerals. Each letter can also have its own bundled Unicode font and text/tile colours. Adjust the A4 grid, tile size, and spacing, then print using the desktop PDF preview.
 
-The desktop installer can be built later with `npm run desktop:installer`; this command has not been run as part of local desktop setup. Automatic updates and remote content updates are not configured.
+Build a local Windows x64 NSIS installer with `npm run desktop:installer`. This creates an installer in `release/` without publishing it. Packaged Windows builds check GitHub Releases at startup and every six hours. Update downloads require a connection; choosing **Later** keeps the current app running and suppresses repeat notifications for that version. Updates are downloaded only after the user chooses the download button, and installed only after **Install and Restart**. Development builds do not check for releases.
+
+## Publishing desktop updates
+
+The configured release feed is the GitHub Releases page for `kavishka2002/Strcle---Copy`. Pushing source code alone does not publish an installer. The `Publish Windows desktop release` workflow runs only for semantic version tags such as `v1.0.1`, verifies that the tag matches `package.json`, builds the existing standalone desktop app and NSIS installer, then publishes the installer and Electron Builder update metadata (`latest.yml` and blockmap files). The existing application ID and per-user application data location are preserved; updating does not replace customer-created designs or local account data.
+
+For the first production release, verify that `package.json` still says `1.0.0` and that the `v1.0.0` tag is not already in use. Commit and push the source first, then push the matching tag:
+
+```powershell
+npm ci
+npm run desktop:installer
+git status --short
+git add -A
+git commit -m "Prepare PaperBloom desktop auto-updates"
+git push -u origin main
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The installer command above is a local build check; the tag push is what starts the publishing workflow. If `v1.0.0` is already used, increment the package version and use that matching unused tag instead.
+
+For a subsequent patch release, start from a clean working tree and increment the package version first (this also updates the lockfile). Then make the source changes, review the working tree, and push a matching tag:
+
+```powershell
+npm version patch --no-git-tag-version
+# Make the source changes for this release.
+git status --short
+git add -A
+git commit -m "Release PaperBloom v1.0.1"
+git push origin main
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+Replace `v1.0.1` in the commit and tag commands with the actual new version. Review `git status --short` before `git add -A` so unrelated local files are not included. Do not reuse a release tag.
+
+Before tagging, ensure GitHub Actions are enabled for the repository and open **Settings → Actions → General → Workflow permissions**. Allow **Read and write permissions** so the workflow's `GITHUB_TOKEN` can create and upload a GitHub Release. The workflow declares the narrower `contents: write` permission; no personal access token or manually configured secret is needed. A version-to-version test requires the older version to have been installed from a published release and the newer version to have its own published release.
 
 ## Offline bookshop accounts
 
