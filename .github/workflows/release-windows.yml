@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing version tag to build and publish
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -12,11 +18,13 @@ jobs:
   release:
     runs-on: windows-latest
     timeout-minutes: 90
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
     steps:
       - name: Check out the tagged commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ inputs.release_tag || github.ref }}
           fetch-depth: 0
 
       - name: Set up Node.js
@@ -28,11 +36,11 @@ jobs:
       - name: Verify the tag, package version, and checked-out commit
         shell: bash
         run: |
-          if [[ ! "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+          if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
             echo "Release tags must use stable vMAJOR.MINOR.PATCH versions." >&2
             exit 1
           fi
-          tag_version="${GITHUB_REF_NAME#v}"
+          tag_version="${RELEASE_TAG#v}"
           package_version="$(node -p 'require("./package.json").version')"
           lock_version="$(node -p 'require("./package-lock.json").version')"
           root_lock_version="$(node -p 'require("./package-lock.json").packages[""].version')"
@@ -43,7 +51,7 @@ jobs:
             exit 1
           fi
           checked_out_commit="$(git rev-parse HEAD)"
-          tagged_commit="$(git rev-parse "${GITHUB_REF_NAME}^{commit}")"
+          tagged_commit="$(git rev-parse "${RELEASE_TAG}^{commit}")"
           if [[ "$checked_out_commit" != "$tagged_commit" ]]; then
             echo "The checked-out commit does not match the release tag." >&2
             exit 1
@@ -70,14 +78,14 @@ jobs:
       - name: Validate generated update assets
         shell: bash
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_TAG#v}"
           node scripts/verify-desktop-release.cjs release "$version"
 
       - name: Refuse to alter an existing release
         shell: bash
         run: |
-          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "A release for $GITHUB_REF_NAME already exists; refusing to overwrite it." >&2
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "A release for $RELEASE_TAG already exists; refusing to overwrite it." >&2
             exit 1
           fi
         env:
@@ -86,11 +94,11 @@ jobs:
       - name: Create draft release
         shell: bash
         run: |
-          gh release create "$GITHUB_REF_NAME" \
+          gh release create "$RELEASE_TAG" \
             --draft \
             --verify-tag \
-            --title "LittlePaper $GITHUB_REF_NAME" \
-            --notes "LittlePaper $GITHUB_REF_NAME Windows desktop release" \
+            --title "LittlePaper $RELEASE_TAG" \
+            --notes "LittlePaper $RELEASE_TAG Windows desktop release" \
             --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -99,7 +107,7 @@ jobs:
         shell: bash
         run: |
           version="$(node -p 'require("./package.json").version')"
-          gh release upload "$GITHUB_REF_NAME" \
+          gh release upload "$RELEASE_TAG" \
             "release/LittlePaper-Setup-${version}.exe" \
             "release/latest.yml" \
             "release/LittlePaper-Setup-${version}.exe.blockmap" \
@@ -113,7 +121,7 @@ jobs:
           version="$(node -p 'require("./package.json").version')"
           installer="LittlePaper-Setup-${version}.exe"
           blockmap="${installer}.blockmap"
-          assets="$(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name' --repo "$GITHUB_REPOSITORY")"
+          assets="$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' --repo "$GITHUB_REPOSITORY")"
           for asset in "$installer" "latest.yml" "$blockmap"; do
             if ! grep -Fxq -- "$asset" <<< "$assets"; then
               echo "Required release asset is missing: $asset" >&2
@@ -121,7 +129,7 @@ jobs:
             fi
           done
           verify_directory="$(node -e 'const fs = require("node:fs"); const os = require("node:os"); const path = require("node:path"); process.stdout.write(fs.mkdtempSync(path.join(os.tmpdir(), "littlepaper-release-verify-")))')"
-          gh release download "$GITHUB_REF_NAME" \
+          gh release download "$RELEASE_TAG" \
             --pattern "$installer" \
             --pattern "latest.yml" \
             --pattern "$blockmap" \
@@ -133,6 +141,6 @@ jobs:
 
       - name: Publish verified release
         shell: bash
-        run: gh release edit "$GITHUB_REF_NAME" --draft=false --repo "$GITHUB_REPOSITORY"
+        run: gh release edit "$RELEASE_TAG" --draft=false --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
