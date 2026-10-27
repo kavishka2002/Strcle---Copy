@@ -34,3 +34,15 @@ jobs:
         run: npm run desktop:release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish NSIS differential update blockmap
+        shell: bash
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          blockmap="release/LittlePaper Setup ${version}.exe.blockmap"
+          safe_blockmap="release/LittlePaper-Setup-${version}.exe.blockmap"
+          test -f "$blockmap"
+          cp "$blockmap" "$safe_blockmap"
+          gh release upload "$GITHUB_REF_NAME" "$safe_blockmap" --clobber --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
