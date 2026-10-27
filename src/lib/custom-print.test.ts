@@ -56,6 +56,17 @@ describe("custom print generators and A4 layout", () => {
     expect(updated[1]).toEqual(second);
   });
 
+  it("changes width and height only for individually selected number stickers", () => {
+    const first = label({ id: "first", text: "1", background: "#aa0000" });
+    const second = label({ id: "second", text: "2", background: "#00aa00" });
+    const updated = updateCustomPrintItems([first, second], ["first"], {
+      widthMm: 32, heightMm: 28, shape: "circle"
+    });
+
+    expect(updated[0]).toMatchObject({ widthMm: 32, heightMm: 28, shape: "circle", text: "1", background: "#aa0000" });
+    expect(updated[1]).toEqual(second);
+  });
+
   it("fits long text to the physical sticker box while keeping a minimum readable size", () => {
     expect(fitCustomPrintFontSize(label({ text: "A", fontSize: 12 }))).toBe(12);
     const longNameSize = fitCustomPrintFontSize(label({

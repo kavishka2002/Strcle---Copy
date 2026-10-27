@@ -13,7 +13,7 @@ describe("supplied artwork design collection", () => {
     const existingIds = new Set([...starterTemplates, ...newDesignTemplates].map(template => template.id));
     const newIds = customArtworkTemplates.map(template => template.id);
 
-    expect(customArtworkTemplates).toHaveLength(40);
+    expect(customArtworkTemplates).toHaveLength(42);
     expect(new Set(newIds).size).toBe(newIds.length);
     expect(newIds.every(id => !existingIds.has(id))).toBe(true);
     expect(customArtworkTemplateIds.size).toBe(customArtworkTemplates.length);
@@ -117,6 +117,31 @@ describe("supplied artwork design collection", () => {
     expect(template!.decoration).toBe("collection-art-creative-circle");
     expect(template!.images?.[0].assetId).toBe("custom-art-creative-circle-boy");
     expect(existsSync(join(process.cwd(), "public", "custom-art", "creative-circle-boy.png"))).toBe(true);
+  });
+
+  it("adds the supplied storybook elephant and butterfly fairy as distinct favorite stickers", () => {
+    const elephant = customArtworkTemplates.find(template => template.id === "new-art-elephant-storytime");
+    const fairy = customArtworkTemplates.find(template => template.id === "new-art-butterfly-wish-fairy");
+
+    expect(elephant).toMatchObject({
+      name: "Elephant Storytime",
+      kind: "sticker",
+      widthMm: 72,
+      heightMm: 72,
+      favourite: true,
+      decoration: "collection-art-elephant-storytime"
+    });
+    expect(elephant?.images?.[0].assetId).toBe("custom-art-vecteezy-elephant-reader");
+    expect(fairy).toMatchObject({
+      name: "Butterfly Wish",
+      kind: "sticker",
+      widthMm: 90,
+      heightMm: 45,
+      favourite: true,
+      decoration: "collection-art-butterfly-wish"
+    });
+    expect(fairy?.images?.[0].assetId).toBe("custom-art-vecteezy-pixie-butterfly");
+    expect(customArtworkAssets.filter(asset => asset.id.startsWith("custom-art-vecteezy-"))).toHaveLength(2);
   });
 
   it("registers the new supplied artwork as editable, printable designs", () => {

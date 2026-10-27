@@ -50,6 +50,7 @@ const palettes: Record<PaletteName, string[]> = {
   pastel: ["#f5b7c7", "#b8d8ee", "#c8b9e9", "#c4dfc5", "#f5dfac"],
   monochrome: ["#252525", "#616161", "#909090", "#c1c1c1", "#e1e1e1"]
 };
+const stickerShapes: CustomPrintShape[] = ["circle", "square", "rectangle", "rounded", "triangle", "star", "heart"];
 const toolCards: Array<{ id: CustomPrintTool; name: string; description: string; icon: typeof Circle; color: string }> = [
   { id: "numbers", name: "Number Sticker Maker", description: "Build number ranges and school number sets.", icon: Circle, color: "bg-[#fff0e8] text-[#cf8056]" },
   { id: "alphabet", name: "Alphabet & Letter Maker", description: "English, numbers, Sinhala, words, and initials.", icon: Type, color: "bg-[#f1eafd] text-[#8061a8]" },
@@ -210,7 +211,16 @@ export function CustomPrintStudio({
   const [showShapeText, setShowShapeText] = useState(false);
   const [customShapeColor, setCustomShapeColor] = useState("#397b68");
   const [selectedRewards, setSelectedRewards] = useState<string[]>(["Good Job", "Excellent", "Well Done"]);
-  const [shape, setShape] = useState<CustomPrintShape>("rounded");
+  const [toolShapes, setToolShapes] = useState<Record<CustomPrintTool, CustomPrintShape>>({
+    numbers: "rounded",
+    alphabet: "rounded",
+    "mini-art": "rounded",
+    shapes: "rounded",
+    rewards: "star",
+    "text-labels": "rounded",
+    "bulk-builder": "rounded",
+    saved: "rounded"
+  });
   const [paletteName, setPaletteName] = useState<PaletteName>("school");
   const [selectedColors, setSelectedColors] = useState<string[]>(palettes.school.slice(0, 3));
   const [background, setBackground] = useState("#fffdf7");
@@ -331,10 +341,10 @@ export function CustomPrintStudio({
     }
   };
 
-  const updateSelectedItems = (patch: Partial<CustomPrintItem>) => {
+  const updateSelectedItems = (patch: Partial<CustomPrintItem>, itemIds = selectedItemIds) => {
     const current = editingMaker ? latestMakerDesign.current : latestDesign.current;
     if (!current) return;
-    const next = { ...current, updatedAt: timestamp(), items: updateCustomPrintItems(current.items, selectedItemIds, patch) };
+    const next = { ...current, updatedAt: timestamp(), items: updateCustomPrintItems(current.items, itemIds, patch) };
     if (editingMaker) {
       latestMakerDesign.current = next;
       setMakerDesign(next);
@@ -399,12 +409,17 @@ export function CustomPrintStudio({
           : key === "outlineWidth" ? number >= 0 && number <= 5
             : key === "copies" ? Number.isInteger(number) && number >= 1 && number <= 1000
               : number >= -360 && number <= 360;
-      if (valid) updateSelectedItems({ [key]: number });
+      if (valid) {
+        const itemIds = editingMaker && editableDesign?.tool === "numbers" && key === "fontSize"
+          ? editableDesign.items.map(item => item.id)
+          : selectedItemIds;
+        updateSelectedItems({ [key]: number }, itemIds);
+      }
     };
     const colorField = (label: string, value: string, key: "background" | "color" | "outlineColor") => <label className="field-label">{label}<div className="mt-2 flex gap-2"><input className="text-input h-10 w-14 p-1" type="color" value={/^#[0-9a-f]{6}$/i.test(value) ? value : "#ffffff"} onChange={event => updateSelectedItems({ [key]: event.target.value })}/><input className="text-input min-w-0 flex-1" aria-label={`${label} HEX`} value={hexColorDrafts[key] ?? value} onFocus={() => setHexColorDrafts(previous => ({ ...previous, [key]: value }))} onChange={event => { const next = event.target.value; setHexColorDrafts(previous => ({ ...previous, [key]: next })); if (/^#[0-9a-f]{6}$/i.test(next)) updateSelectedItems({ [key]: next }); }} onBlur={event => { if (/^#[0-9a-f]{6}$/i.test(event.target.value)) updateSelectedItems({ [key]: event.target.value }); setHexColorDrafts(previous => ({ ...previous, [key]: /^#[0-9a-f]{6}$/i.test(event.target.value) ? event.target.value : value })); }}/></div></label>;
     const sizeControl = (label: string, key: "widthMm" | "heightMm", max: number) => <label className="field-label">{label}<input className="text-input mt-2" type="number" min="0.1" max="297" step="0.1" value={selectedItem[key]} onChange={event => numericValue(event.target.value, key)}/><input className="mt-2 w-full accent-[#397b68]" aria-label={`${label} slider`} type="range" min="1" max={max} step="1" value={Math.min(max, selectedItem[key])} onChange={event => numericValue(event.target.value, key)}/></label>;
     return <section className="mt-5 rounded-xl border border-[#e9eee9] bg-[#fbfdfb] p-4" aria-label="Selected sticker editor">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><div><b className="text-sm">Edit selected sticker{selectedItems.length > 1 ? "s" : ""}</b><p className="mt-1 text-[11px] text-slate-500">{selectedItems.length} selected · updates save automatically</p></div><div className="flex gap-2"><button className="small-action" onClick={duplicateSelectedItems}><Copy size={13}/> Duplicate</button><button className="small-action danger" onClick={removeSelectedItems}><Trash2 size={13}/> Delete</button></div></div>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><div><b className="text-sm">Edit selected sticker{selectedItems.length > 1 ? "s" : ""}</b><p className="mt-1 text-[11px] text-slate-500">{selectedItems.length} selected · updates save automatically</p>{editingMaker && editableDesign.tool === "numbers" && <p className="mt-1 text-[11px] text-slate-500">Width and height change only for selected numbers. Font size updates every number; larger stickers continue onto extra A4 pages.</p>}</div><div className="flex gap-2"><button className="small-action" onClick={duplicateSelectedItems}><Copy size={13}/> Duplicate</button><button className="small-action danger" onClick={removeSelectedItems}><Trash2 size={13}/> Delete</button></div></div>
       <label className="field-label block">Sticker text<textarea className="text-input mt-2 min-h-16" lang="si" dir="auto" value={selectedItem.text} onChange={event => updateSelectedItems({ text: event.target.value, label: event.target.value || selectedItem.label })}/></label>
       <div className="mt-3 grid grid-cols-2 gap-3">{sizeControl("Width (mm)", "widthMm", 200)}{sizeControl("Height (mm)", "heightMm", 280)}</div>
       {selectedItems.some(item => item.text) && <div className="mt-3 grid grid-cols-2 gap-3">
@@ -491,7 +506,7 @@ export function CustomPrintStudio({
     } as const;
   };
 
-  const createLabelItems = (texts: string[], tool: CustomPrintTool, selectedShape = shape, artwork?: string, assetId?: string) => {
+  const createLabelItems = (texts: string[], tool: CustomPrintTool, selectedShape = toolShapes[tool], artwork?: string, assetId?: string) => {
     const common = commonSettings();
     const palette = paletteName === "school" ? [] : palettes[paletteName];
     return texts.map((text, index) => {
@@ -550,7 +565,7 @@ export function CustomPrintStudio({
     try {
       const artwork = selectedAssetId ? undefined : selectedArtwork;
       const assetId = selectedAssetId || undefined;
-      const [pictureItem] = createLabelItems([""], "mini-art", "image", artwork, assetId);
+      const [pictureItem] = createLabelItems([""], "mini-art", toolShapes["mini-art"], artwork, assetId);
       pictureItem.label = selectedAsset?.name ?? artworkOptions.find(option => option.id === selectedArtwork)?.name ?? "Picture";
       await appendItems([pictureItem], "mini-art");
     } catch (cause) {
@@ -565,7 +580,7 @@ export function CustomPrintStudio({
       const common = commonSettings();
       const labels = showShapeText && shapeText.trim() ? parseCustomLabels(shapeText) : [""];
       const made = colorsToUse.flatMap((color, index) => labels.map((text, labelIndex) => makeItem(text, text || `Shape ${index + 1}`, {
-        ...common, shape, background: color, color: textColor, outlineColor, outlineWidth: common.outlineWidth,
+        ...common, shape: toolShapes.shapes, background: color, color: textColor, outlineColor, outlineWidth: common.outlineWidth,
         id: `${newId()}-${labelIndex}`
       })));
       await appendItems(made, "shapes");
@@ -579,7 +594,7 @@ export function CustomPrintStudio({
     try {
       const texts = [...selectedRewards, ...parseCustomLabels(customText)];
       if (!texts.length) throw new RangeError("Select a reward message or enter custom text.");
-      await appendItems(createLabelItems(texts, "rewards", "star"), "rewards");
+      await appendItems(createLabelItems(texts, "rewards"), "rewards");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not create reward labels.");
     }
@@ -722,6 +737,9 @@ export function CustomPrintStudio({
     setPaletteName(value);
     setSelectedColors(value === "school" ? [] : [...palettes[value]]);
   };
+  const selectToolShape = (tool: CustomPrintTool, value: CustomPrintShape) => {
+    setToolShapes(previous => ({ ...previous, [tool]: value }));
+  };
 
   const selectedTool = toolCards.find(card => card.id === activeTool);
   const mainPreviewText = activeTool === "numbers" ? (() => {
@@ -737,7 +755,9 @@ export function CustomPrintStudio({
     widthMm: Number.isFinite(dimensionMm(width)) && dimensionMm(width) > 0 ? dimensionMm(width) : 20,
     heightMm: Number.isFinite(dimensionMm(height)) && dimensionMm(height) > 0 ? dimensionMm(height) : 20,
     copies: 1,
-    shape: activeTool === "rewards" ? "star" : activeTool === "mini-art" ? "image" : shape,
+    shape: activeTool === "maker-preview" ? selectedItem?.shape ?? "rounded"
+      : activeTool === "dashboard" || activeTool === "saved" ? "rounded"
+        : toolShapes[activeTool],
     background: activeTool === "shapes" && selectedColors.length ? selectedColors[0] : background,
     color: textColor,
     outlineColor,
@@ -843,7 +863,6 @@ export function CustomPrintStudio({
             <p className="text-[11px] text-slate-500">Original vector icons are drawn locally; uploaded image blobs are stored in the existing local asset library and printed from IndexedDB-backed URLs.</p>
           </div>}
           {activeTool === "shapes" && <div className="space-y-4">
-            <label className="field-label block">Shape<select className="text-input mt-2" value={shape} onChange={e => setShape(e.target.value as CustomPrintShape)}>{["circle", "square", "rectangle", "rounded", "triangle", "star", "heart"].map(option => <option key={option} value={option}>{option[0].toUpperCase() + option.slice(1)}</option>)}</select></label>
             <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={showShapeText} onChange={e => setShowShapeText(e.target.checked)}/> Add text inside the shapes</label>
             {showShapeText && <label className="field-label block">Text inside each shape<textarea className="text-input mt-2 min-h-20 resize-y" lang="si" dir="auto" value={shapeText} onChange={e => setShapeText(e.target.value)} placeholder="Enter text in Sinhala or English"/></label>}
             <p className="text-xs text-slate-500">Text is off by default. One line makes one sticker for each selected colour.</p>
@@ -856,6 +875,7 @@ export function CustomPrintStudio({
           <div className="mt-5 space-y-4 border-t border-[#f1ede8] pt-4">
             {activeTool !== "numbers" && activeTool !== "alphabet" && <div className="grid grid-cols-2 gap-3"><label className="field-label">Sticker width <div className="mt-2 flex gap-2"><input className="text-input min-w-0" type="number" min="0.1" step="0.1" value={width} onChange={e => setWidth(e.target.value)}/><select aria-label="Sticker size unit" className="text-input max-w-20" value={sizeUnit} onChange={e => setSizeUnit(e.target.value as "mm" | "cm")}><option value="mm">mm</option><option value="cm">cm</option></select></div></label><label className="field-label">Sticker height<input className="text-input mt-2" type="number" min="0.1" step="0.1" value={height} onChange={e => setHeight(e.target.value)}/></label></div>}
             {(activeTool === "numbers" || activeTool === "alphabet") && <div className="grid grid-cols-2 gap-3"><label className="field-label">Sticker width <div className="mt-2 flex gap-2"><input className="text-input min-w-0" type="number" min="0.1" step="0.1" value={width} onChange={e => setWidth(e.target.value)}/><select aria-label="Sticker size unit" className="text-input max-w-20" value={sizeUnit} onChange={e => setSizeUnit(e.target.value as "mm" | "cm")}><option value="mm">mm</option><option value="cm">cm</option></select></div></label><label className="field-label">Sticker height<input className="text-input mt-2" type="number" min="0.1" step="0.1" value={height} onChange={e => setHeight(e.target.value)}/></label></div>}
+            {activeTool !== "maker-preview" && <label className="field-label block">Sticker shape<select className="text-input mt-2" value={toolShapes[activeTool]} onChange={event => selectToolShape(activeTool, event.target.value as CustomPrintShape)}>{stickerShapes.map(option => <option key={option} value={option}>{option[0].toUpperCase() + option.slice(1)}</option>)}</select></label>}
             {activeTool === "mini-art" && <div className="grid grid-cols-2 gap-2 text-[11px]">{[10, 15, 20, 25, 30].map(size => <button key={size} className={`filter-chip ${dimensionMm(width) === size && dimensionMm(height) === size ? "selected" : ""}`} onClick={() => { setSizeUnit("mm"); setWidth(String(size)); setHeight(String(size)); }}>{size === 10 ? "1 × 1 cm" : `${(size / 10).toFixed(size % 10 ? 1 : 0)} × ${(size / 10).toFixed(size % 10 ? 1 : 0)} cm`}</button>)}</div>}
             <div className="grid grid-cols-2 gap-3"><label className="field-label">Copies per design<input className="text-input mt-2" type="number" min="1" max="1000" value={copies} onChange={e => setCopies(e.target.value)}/></label><label className="field-label">Preset palette<select className="text-input mt-2" value={paletteName} onChange={e => selectPalette(e.target.value as PaletteName)}><option value="school">School colours</option><option value="rainbow">Rainbow</option><option value="pastel">Pastel</option><option value="monochrome">Monochrome</option></select></label></div>
             <div className="flex flex-wrap gap-2" aria-label="Sticker colour palette">{palettes[paletteName].map(color => <button type="button" key={color} aria-label={`Toggle colour ${color}`} className={`color-dot ${selectedColors.includes(color) ? "selected" : ""}`} style={{ background: color }} onClick={() => setSelectedColors(previous => previous.includes(color) ? previous.filter(item => item !== color) : [...previous, color])}/>)}</div>

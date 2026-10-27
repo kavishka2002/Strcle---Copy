@@ -36,6 +36,24 @@ describe("separate new design collection", () => {
     }
   });
 
+  it("provides three clean, artwork-free name label styles", () => {
+    const plainLabels = newDesignTemplates.filter(template =>
+      ["new-plain-name-label", "new-bold-black-frame", "new-soft-grey-frame"].includes(template.id)
+    );
+
+    expect(plainLabels).toHaveLength(3);
+    expect(plainLabels.every(template => template.images?.length === 0)).toBe(true);
+    expect(plainLabels.map(template => template.name)).toEqual([
+      "Plain Name Label",
+      "Bold Black Frame",
+      "Soft Grey Frame"
+    ]);
+    expect(new Set(plainLabels.map(template => template.background)).size).toBe(3);
+    expect(plainLabels.every(template =>
+      ["name", "school", "grade", "subject"].every(field => template.texts?.some(text => text.field === field))
+    )).toBe(true);
+  });
+
   it("creates editable student, school, grade, and subject fields for each new design", () => {
     for (const template of newDesignTemplates) {
       const design = createDesign("Amaya", {

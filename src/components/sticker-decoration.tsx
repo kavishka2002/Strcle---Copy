@@ -55,6 +55,14 @@ export function StickerDecoration({
         <circle cx="8" cy="6" r="2" fill={secondary}/><circle cx="8" cy="44" r="2" fill={secondary}/>
         <path d="M92 4v42" stroke={accent} strokeWidth=".35" opacity=".16"/>
       </svg>;
+    case "collection-plain-white-inset":
+      return <svg aria-hidden="true" viewBox="0 0 100 50" preserveAspectRatio="none" style={common}>
+        <rect x="7" y="6" width="86" height="38" rx="4" fill="white" stroke={accent} strokeWidth=".8"/>
+      </svg>;
+    case "collection-grey-white-inset":
+      return <svg aria-hidden="true" viewBox="0 0 100 50" preserveAspectRatio="none" style={common}>
+        <rect x="7" y="7" width="86" height="36" rx="4" fill="white" stroke={accent} strokeWidth=".8"/>
+      </svg>;
     case "collection-floral":
       return <svg aria-hidden="true" viewBox="0 0 100 50" preserveAspectRatio="none" style={common}>
         <path d="M3 43C13 38 11 27 19 21M4 40c5-1 8 1 9 5m-2-12c0-4 2-6 5-7m69 19c5-3 6-8 8-12" fill="none" stroke={secondary} strokeWidth=".8" strokeLinecap="round" opacity=".75"/>

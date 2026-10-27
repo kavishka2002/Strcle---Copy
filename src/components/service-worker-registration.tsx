@@ -21,6 +21,7 @@ declare global {
     littlePaperDesktop?: Readonly<{
       isDesktop: true;
       printCurrentPage?: (options?: { orientation?: "portrait" | "landscape" }) => Promise<{ status: "previewed" }>;
+      printWithDialog?: (options?: { orientation?: "portrait" | "landscape" }) => Promise<{ status: "printed"; printerName: string } | { status: "cancelled" }>;
       printResource?: (url: string) => Promise<{ status: "previewed" }>;
       printPdfData?: (pdfData: Uint8Array) => Promise<{ status: "previewed" }>;
       getUpdateInfo?: () => Promise<DesktopUpdateStatus>;

@@ -13,6 +13,8 @@ interface NewTemplateStyle {
   layout: StickerTemplate["layout"];
   radius: number;
   borderStyle: StickerTemplate["borderStyle"];
+  borderWidth?: number;
+  innerBorder?: boolean;
   image?: { assetId: string; x: number; y: number; width: number };
   text: {
     x: number;
@@ -85,6 +87,24 @@ const designs: NewTemplateStyle[] = [
     text: { x: 50, width: 82, align: "center", nameY: 22, schoolY: 43, gradeY: 64, subjectY: 83, nameSize: 24, schoolSize: 11, gradeSize: 10, subjectSize: 12 }
   },
   {
+    id: "new-plain-name-label", name: "Plain Name Label", background: "#ffffff", border: "#262626",
+    accent: "#242424", secondary: "#555555", decoration: "collection-plain-outline", layout: "centered",
+    radius: 5, borderWidth: 1.15, innerBorder: true, borderStyle: "solid",
+    text: { x: 50, width: 86, align: "center", nameY: 24, schoolY: 45, gradeY: 64, subjectY: 82, nameSize: 24, schoolSize: 11, gradeSize: 10, subjectSize: 11 }
+  },
+  {
+    id: "new-bold-black-frame", name: "Bold Black Frame", background: "#292929", border: "#292929",
+    accent: "#191919", secondary: "#444444", decoration: "collection-plain-white-inset", layout: "centered",
+    radius: 5, borderWidth: 1, borderStyle: "solid",
+    text: { x: 50, width: 78, align: "center", nameY: 34, schoolY: 52, gradeY: 66, subjectY: 80, nameSize: 24, schoolSize: 11, gradeSize: 10, subjectSize: 11 }
+  },
+  {
+    id: "new-soft-grey-frame", name: "Soft Grey Frame", background: "#737373", border: "#737373",
+    accent: "#292929", secondary: "#454545", decoration: "collection-grey-white-inset", layout: "centered",
+    radius: 5, borderWidth: 1, borderStyle: "solid",
+    text: { x: 50, width: 72, align: "center", nameY: 31, schoolY: 49, gradeY: 64, subjectY: 79, nameSize: 23, schoolSize: 11, gradeSize: 10, subjectSize: 11 }
+  },
+  {
     id: "new-cute-animals", name: "Cute Animals", background: "#f0f8ff", border: "#78a8bd",
     accent: "#3a536c", secondary: "#e9ad52", decoration: "collection-paws", layout: "split",
     radius: 14, borderStyle: "solid", image: { assetId: "starter-bunny", x: 15, y: 53, width: 27 },
@@ -149,8 +169,8 @@ export const newDesignTemplates: StickerTemplate[] = designs.map(style => {
     accent: style.accent,
     borderStyle: style.borderStyle,
     radius: style.radius,
-    borderWidth: style.id === "new-school-classic" ? 1.8 : 1.4,
-    innerBorder: ["new-premium-pastel", "new-school-classic", "new-floral-garden"].includes(style.id),
+    borderWidth: style.borderWidth ?? (style.id === "new-school-classic" ? 1.8 : 1.4),
+    innerBorder: style.innerBorder ?? ["new-premium-pastel", "new-school-classic", "new-floral-garden"].includes(style.id),
     showCutline: false,
     layout: style.layout,
     decoration: style.decoration,

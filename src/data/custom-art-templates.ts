@@ -76,6 +76,8 @@ export const customArtworkAssets: CustomArtworkAsset[] = [
   { id: "custom-art-chick-sunshine", name: "Sunny Chick Buddy", file: "chick-sunshine.png", category: "Animals" },
   { id: "custom-art-bluebird-buddy", name: "Bluebird Giggles", file: "bluebird-buddy.png", category: "Animals" },
   { id: "custom-art-fairy-star-wand", name: "Star Wand Fairy", file: "fairy-star-wand.png", category: "Cartoon" },
+  { id: "custom-art-vecteezy-elephant-reader", name: "Storybook Elephant", file: "vecteezy-elephant-book-reader.png", category: "Animals" },
+  { id: "custom-art-vecteezy-pixie-butterfly", name: "Butterfly Wish Fairy", file: "vecteezy-pixie-butterfly.png", category: "Cartoon" },
   { id: CUSTOM_SIZE_ARTWORK_ID, name: "Apple & pencil", file: "custom-size-apple-pencil.png", category: "School", folder: "starter-art" }
 ];
 
@@ -400,6 +402,23 @@ const designs: CustomArtworkDesign[] = [
     decoration: "collection-art-fairy-star", fontFamily: "Baloo 2", layout: "split", radius: 16, borderStyle: "solid",
     image: { x: 17, y: 50, width: 27 },
     text: { x: 64, width: 60, align: "center", nameY: 20, schoolY: 41, gradeY: 62, subjectY: 81, nameSize: 24, schoolSize: 11.5, gradeSize: 10.5, subjectSize: 12 }
+  },
+  {
+    id: "custom-art-vecteezy-elephant-reader", name: "Storybook Elephant", file: "vecteezy-elephant-book-reader.png", category: "Animals",
+    templateId: "new-art-elephant-storytime", templateName: "Elephant Storytime",
+    background: "#fff9ee", border: "#d5a74a", accent: "#3d5267", secondary: "#d98042",
+    decoration: "collection-art-elephant-storytime", fontFamily: "Baloo 2", layout: "centered", radius: 136,
+    widthMm: 72, heightMm: 72, borderStyle: "solid",
+    image: { x: 50, y: 54, width: 48 },
+    text: { x: 50, width: 76, align: "center", nameY: 15, schoolY: 28, gradeY: 78, subjectY: 88, nameSize: 22, schoolSize: 11, gradeSize: 10.5, subjectSize: 11 }
+  },
+  {
+    id: "custom-art-vecteezy-pixie-butterfly", name: "Butterfly Wish Fairy", file: "vecteezy-pixie-butterfly.png", category: "Cartoon",
+    templateId: "new-art-butterfly-wish-fairy", templateName: "Butterfly Wish",
+    background: "#f7f0ff", border: "#9878cc", accent: "#51416f", secondary: "#df9fb9",
+    decoration: "collection-art-butterfly-wish", fontFamily: "Fredoka", layout: "playful", radius: 16, borderStyle: "solid",
+    image: { x: 83, y: 51, width: 28 },
+    text: { x: 38, width: 56, align: "center", nameY: 20, schoolY: 41, gradeY: 62, subjectY: 81, nameSize: 24, schoolSize: 11.5, gradeSize: 10.5, subjectSize: 12 }
   }
 ];
 
@@ -469,7 +488,7 @@ export const customArtworkTemplates: StickerTemplate[] = designs.map((style, ind
       makeText(style, "grade", sinhalaFontFamily),
       makeText(style, "subject", sinhalaFontFamily)
     ],
-    favourite: false,
+    favourite: ["new-art-elephant-storytime", "new-art-butterfly-wish-fairy"].includes(style.templateId),
     createdAt: 0,
     updatedAt: 0
   };

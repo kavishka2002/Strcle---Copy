@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, CircleHelp, Copy, Download, FileImage, Files,
+  ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, CircleHelp, Copy, Download, FileImage, Files, Megaphone,
   FileText, FileUser, Flower2, FolderHeart, Heart, Home, ImagePlus, Layers, LayoutGrid, Menu, Minus, Palette, Shapes,
   Plus, Printer, RotateCcw, Save, Search, Settings, Sparkles, Trash2, Upload, WandSparkles, X
 } from "lucide-react";
@@ -30,6 +30,7 @@ import { OlPastPapers } from "@/components/ol-past-papers";
 import { ColoringSheetLibrary } from "@/components/coloring-sheet-library";
 import { CvBuilder } from "@/components/cv-builder";
 import { DocumentLibrary } from "@/components/document-library";
+import { A4NoticeLibrary } from "@/components/a4-notice-library";
 import { SinhalaHodiya } from "@/components/sinhala-hodiya";
 import { LanguageToggle, LocalizedUi, ThemeToggle } from "@/components/app-language";
 import { AppToast } from "@/components/app-toast";
@@ -39,11 +40,11 @@ import { useTrialAccess } from "@/components/trial-access";
 import { printCurrentPage } from "@/lib/print-page";
 import type { AssetCategory, DesignImage, EnglishFontFamily, ImageAsset, LanguageMode, MeasurementUnit, SinhalaFontFamily, StickerDesign, StickerTemplate, TextElement, TextInputMode } from "@/types";
 
-type Section = "Home" | "Create sticker" | "Templates" | "Recent designs" | "Saved designs" | "PNG assets" | "Past Paper Finder" | "Picture Colouring Library" | "CV Builder" | "Documents & Forms" | "A4 print studio" | "Sinhala Hodiya" | "Custom Print Studio" | "Settings";
+type Section = "Home" | "Create sticker" | "Templates" | "Recent designs" | "Saved designs" | "PNG assets" | "Past Paper Finder" | "Picture Colouring Library" | "CV Builder" | "Documents & Forms" | "A4 print studio" | "A4 Notice & Advertisement Templates" | "Sinhala Hodiya" | "Custom Print Studio" | "Settings";
 const navGroups: Array<{ label: string; items: Array<{ title: Section; icon: typeof Home }> }> = [
   { label: "Workspace", items: [{ title: "Home", icon: Home }, { title: "Create sticker", icon: Sparkles }, { title: "Templates", icon: LayoutGrid }] },
   { label: "Your library", items: [{ title: "Recent designs", icon: RotateCcw }, { title: "Saved designs", icon: FolderHeart }, { title: "PNG assets", icon: FileImage }, { title: "Picture Colouring Library", icon: ImagePlus }, { title: "Past Paper Finder", icon: Files }, { title: "CV Builder", icon: FileUser }, { title: "Documents & Forms", icon: FileText }] },
-  { label: "Production", items: [{ title: "A4 print studio", icon: Printer }, { title: "Sinhala Hodiya", icon: BookOpen }, { title: "Custom Print Studio", icon: Shapes }] },
+  { label: "Production", items: [{ title: "A4 print studio", icon: Printer }, { title: "A4 Notice & Advertisement Templates", icon: Megaphone }, { title: "Sinhala Hodiya", icon: BookOpen }, { title: "Custom Print Studio", icon: Shapes }] },
   { label: "Preferences", items: [{ title: "Settings", icon: Settings }] }
 ];
 const categories: AssetCategory[] = ["Cartoon", "Flowers", "Animals", "Nature", "School", "Sports", "Space", "Custom"];
@@ -1041,6 +1042,7 @@ export function StickerStudio() {
     if (section === "Create sticker" || section === "Templates") return Creation();
     if (section === "PNG assets") return AssetLibrary();
     if (section === "A4 print studio") return design ? PrintStudio() : EmptyPanel({ title: "Open a design to start printing", text: "Create or open a saved sticker first, then choose A4 Print Studio.", action: () => changeSection("Create sticker") });
+    if (section === "A4 Notice & Advertisement Templates") return <A4NoticeLibrary/>;
     if (section === "Sinhala Hodiya") return <SinhalaHodiya/>;
     if (section === "Custom Print Studio") return <CustomPrintStudio assets={assets} assetUrls={assetUrls} onUpload={onUpload}/>;
     if (section === "Past Paper Finder") return isTrial
@@ -1144,7 +1146,7 @@ export function StickerStudio() {
           <button className={`filter-chip ${printableLabelCategory === "All" ? "selected" : ""}`} onClick={() => setPrintableLabelCategory("All")}>All designs</button>
           {printableLabelCategories.map(category => <button key={category} className={`filter-chip ${printableLabelCategory === category ? "selected" : ""}`} onClick={() => setPrintableLabelCategory(category)}>{category}</button>)}
         </div>}
-        <div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-lg font-bold">{templateCollection === "new" ? "New Designs collection" : "Existing templates"}</h2><p className="mt-1 text-xs text-slate-500">{templateCollection === "new" ? "Choose from image-led stationery designs or 20 new CSS/SVG-only printable name-tag styles." : "Your original built-in and saved templates remain available here."}</p></div><span className="text-xs text-slate-400">{visibleTemplates.length} styles</span></div>
+        <div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-lg font-bold">{templateCollection === "new" ? "New Designs collection" : "Existing templates"}</h2><p className="mt-1 text-xs text-slate-500">{templateCollection === "new" ? "Choose from image-led stationery designs, clean no-art labels, and CSS/SVG-only printable name-tag styles." : "Your original built-in and saved templates remain available here."}</p></div><span className="text-xs text-slate-400">{visibleTemplates.length} styles</span></div>
         {visibleTemplates.length ? <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">{visibleTemplates.map(t => <TemplateCard key={t.id} template={t} assetUrls={assetUrls} selected={selectedTemplateId === t.id} onChoose={() => { setSelectedTemplateId(t.id); if (design) applyTemplate(t); else { setKind(t.kind); changeSection("Create sticker"); } }} favoriteAction={() => void updateTemplateFavourite(t)} renameAction={t.userCreated ? () => void renameTemplate(t) : undefined} duplicateAction={() => void duplicateTemplate(t)} deleteAction={t.userCreated ? () => void deleteTemplate(t) : undefined}/>)}</div> : <div className="empty-strip">No templates match this collection and search. <span>Try a different filter.</span></div>}
       </div>
       : <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">

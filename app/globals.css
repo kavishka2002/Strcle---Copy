@@ -1723,6 +1723,123 @@ button { cursor: pointer; }
 .bookshop-welcome-book { display: grid; width: 54px; height: 54px; place-items: center; border: 1px solid #d4e4d8; border-radius: 16px; background: #fff; box-shadow: 0 5px 14px rgb(47 92 68 / 10%); }
 .bookshop-welcome-book img { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .bookshop-welcome-sparkle { position: absolute; top: -8px; right: -8px; display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid #f2dfb9; border-radius: 50%; background: #fff8e9; color: #b17b2e; }
+
+.a4-notice-library { min-width: 0; }
+.a4-notice-library-main { display: grid; gap: 16px; }
+.a4-notice-library-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; }
+.a4-notice-library-header > div { max-width: 780px; }
+.a4-notice-library-header p,.a4-notice-controls > p { margin: 8px 0 0; color: #758092; font-size: 12px; line-height: 1.7; }
+.a4-notice-search { display: flex; min-height: 42px; align-items: center; gap: 9px; border: 1px solid #e8e4de; border-radius: 12px; background: white; padding: 0 12px; color: #839080; }
+.a4-notice-search input { width: 100%; border: 0; outline: 0; background: transparent; color: #354158; font-size: 12px; }
+.a4-notice-categories { display: flex; gap: 7px; overflow-x: auto; padding: 2px 0 7px; scrollbar-width: thin; }
+.a4-notice-categories .filter-chip { flex: 0 0 auto; white-space: nowrap; }
+.a4-notice-result-count { margin: -5px 0 0; color: #89929e; font-size: 10px; }
+.a4-notice-template-grid,.a4-notice-saved-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+.a4-notice-template-card,.a4-notice-saved-card { display: grid; min-width: 0; align-content: start; gap: 9px; border: 1px solid #ece8e2; border-radius: 15px; background: white; padding: 12px; box-shadow: 0 4px 17px rgb(46 39 30 / 4%); }
+.a4-notice-card-copy { display: grid; gap: 3px; }
+.a4-notice-card-copy b,.a4-notice-saved-card > b { color: #334154; font-size: 12px; }
+.a4-notice-card-copy > span { color: #567465; font-family: "Noto Sans Sinhala", sans-serif; font-size: 11px; }
+.a4-notice-card-copy small,.a4-notice-saved-card small { color: #87919d; font-size: 9px; }
+.a4-notice-use { min-height: 34px; padding: 8px 10px; font-size: 10px; }
+.a4-notice-thumbnail { display: flex; width: 100%; aspect-ratio: 1.9; flex-direction: column; justify-content: center; gap: 6px; overflow: hidden; border: 1px solid #d5d5d5; background: #fff; padding: 11px 15px; color: var(--notice-ink); }
+.a4-notice-thumbnail.portrait { aspect-ratio: 1.5; width: 68%; margin: 0 auto; }
+.a4-notice-thumbnail span { display: -webkit-box; overflow: hidden; color: var(--notice-accent); font-family: "Noto Sans Sinhala", "Inter", sans-serif; font-size: 10px; font-weight: 800; line-height: 1.45; text-align: center; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.a4-notice-thumbnail i { display: block; width: 70%; height: 3px; margin: 0 auto; border-radius: 4px; background: #d7dce0; }
+.a4-notice-thumbnail i:nth-of-type(2) { width: 53%; }
+.a4-notice-thumbnail i:nth-of-type(3) { width: 36%; }
+.a4-notice-thumbnail b { margin-top: 2px; color: var(--notice-accent); font-size: 9px; text-align: center; }
+.a4-notice-thumbnail.a4-notice-bold { border: 0; background: var(--notice-accent); }
+.a4-notice-thumbnail.a4-notice-bold span,.a4-notice-thumbnail.a4-notice-bold b { color: white; }
+.a4-notice-thumbnail.a4-notice-bold i { background: rgb(255 255 255 / 55%); }
+.a4-notice-thumbnail.a4-notice-property { border: 3px double var(--notice-accent); }
+.a4-notice-thumbnail.a4-notice-minimal { border-color: #222; }
+.a4-notice-editor { display: grid; gap: 16px; }
+.a4-notice-editor-toolbar,.a4-notice-preview-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.a4-notice-edit-grid { display: grid; grid-template-columns: minmax(280px,.8fr) minmax(0,1.2fr); align-items: start; gap: 17px; }
+.a4-notice-controls { display: grid; gap: 8px; padding: 18px; }
+.a4-notice-controls h2 { margin: 0; color: #334154; font-size: 18px; }
+.a4-notice-edit-fields { display: grid; gap: 11px; margin-top: 8px; }
+.a4-notice-input-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 5px 9px; }
+.a4-notice-input-row .text-input { grid-column: 1 / -1; resize: vertical; font-size: 11px; line-height: 1.65; }
+.a4-notice-visible { display: inline-flex; align-items: center; gap: 5px; color: #788493; font-size: 10px; }
+.a4-notice-visible input { accent-color: #397b68; }
+.a4-notice-setting-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; margin-top: 8px; }
+.a4-notice-setting-grid input[type="range"] { display: block; width: 100%; margin-top: 10px; accent-color: #397b68; }
+.a4-notice-color { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.a4-notice-color input { width: 42px; height: 32px; border: 1px solid #e6e9e6; border-radius: 8px; background: white; padding: 3px; }
+.a4-notice-preview-column { position: sticky; top: 78px; min-width: 0; }
+.a4-notice-preview-header { margin-bottom: 10px; }
+.a4-notice-preview-header > div { display: grid; gap: 3px; }
+.a4-notice-preview-header b { color: #354158; font-size: 12px; }
+.a4-notice-preview-header span,.a4-notice-print-note { color: #808b98; font-size: 10px; }
+.a4-notice-preview-stage { display: grid; max-height: calc(100vh - 190px); min-height: 500px; place-items: start center; overflow: auto; border: 1px solid #e9e5df; border-radius: 15px; background: #efede8; padding: 18px; }
+.a4-notice-paper { position: relative; display: flex; width: min(100%,520px); aspect-ratio: 210 / 297; flex-direction: column; overflow: hidden; border: 1px solid #ddd; background: #fff; color: var(--notice-ink); font-family: "Noto Sans Sinhala","Inter",sans-serif; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.a4-notice-paper.landscape { aspect-ratio: 297 / 210; }
+.a4-notice-inner { display: flex; width: 100%; height: 100%; min-height: 0; flex-direction: column; padding: 8%; text-align: var(--notice-align); }
+.a4-notice-paper.a4-notice-bold { border: 0; }
+.a4-notice-bold .a4-notice-heading { margin: -8% -8% 7%; border-bottom: 5px solid var(--notice-ink); background: var(--notice-accent); padding: 9% 8% 7%; color: white; }
+.a4-notice-bold .a4-notice-kicker,.a4-notice-bold .a4-notice-heading h2,.a4-notice-bold .a4-notice-translation { color: white; }
+.a4-notice-property { border: 5px double var(--notice-accent); }
+.a4-notice-property .a4-notice-inner { padding: 7%; }
+.a4-notice-property .a4-notice-heading { border-bottom: 2px solid var(--notice-accent); padding-bottom: 5%; }
+.a4-notice-minimal { border: 1px solid #202020; }
+.a4-notice-paper.landscape .a4-notice-inner { padding: 6%; }
+.a4-notice-paper.landscape.a4-notice-bold .a4-notice-heading { margin: -6% -6% 4%; padding: 6%; }
+.a4-notice-paper.landscape.a4-notice-property .a4-notice-inner { padding: 5%; }
+.a4-notice-heading { display: grid; justify-items: var(--notice-align); gap: 3mm; }
+.a4-notice-kicker,.a4-notice-translation { color: var(--notice-accent); font-family: "Noto Sans Sinhala","Inter",sans-serif; font-size: 9pt; font-weight: 700; line-height: 1.45; }
+.a4-notice-heading h2 { width: 100%; margin: 0; color: var(--notice-text); font-family: "Noto Sans Sinhala","Inter",sans-serif; font-size: var(--notice-heading-size); font-weight: 800; line-height: 1.32; overflow-wrap: anywhere; white-space: pre-line; }
+.a4-notice-translation { font-size: 13pt; }
+.a4-notice-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-content: start; gap: 6mm 5mm; margin-top: 9%; }
+.a4-notice-field { min-width: 0; text-align: var(--notice-align); overflow-wrap: anywhere; }
+.a4-notice-field.wide,.a4-notice-field.contact { grid-column: 1 / -1; }
+.a4-notice-field-label { display: block; margin-bottom: 1.5mm; color: var(--notice-accent); font-size: 10pt; font-weight: 700; line-height: 1.45; }
+.a4-notice-field p { margin: 0; color: var(--notice-ink); font-size: var(--notice-body-size); font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-line; }
+.a4-notice-field.contact p { color: var(--notice-text); font-family: "Inter","Noto Sans Sinhala",sans-serif; font-size: calc(var(--notice-body-size) * 1.45); font-weight: 800; letter-spacing: .03em; }
+.a4-notice-footer { display: flex; justify-content: var(--notice-align); margin-top: auto; border-top: 1px solid var(--notice-accent); padding-top: 4mm; color: var(--notice-accent); font-size: 9pt; font-weight: 700; line-height: 1.5; }
+.a4-notice-print-note { display: flex; align-items: flex-start; gap: 7px; margin: 10px 0; line-height: 1.6; }
+.a4-notice-print-host { display: none; }
+.a4-notice-saved-card .a4-notice-thumbnail { margin-bottom: 2px; }
+
+@media (max-width: 1000px) {
+  .a4-notice-template-grid,.a4-notice-saved-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .a4-notice-edit-grid { grid-template-columns: minmax(260px,.9fr) minmax(0,1.1fr); }
+}
+@media (max-width: 760px) {
+  .a4-notice-library-header { align-items: flex-start; flex-direction: column; }
+  .a4-notice-template-grid,.a4-notice-saved-grid { grid-template-columns: 1fr; }
+  .a4-notice-template-card { grid-template-columns: 120px minmax(0,1fr); align-items: center; }
+  .a4-notice-template-card .a4-notice-thumbnail { grid-row: span 2; }
+  .a4-notice-use { grid-column: 2; }
+  .a4-notice-edit-grid { grid-template-columns: 1fr; }
+  .a4-notice-preview-column { position: static; }
+  .a4-notice-preview-stage { max-height: none; min-height: 0; padding: 10px; }
+  .a4-notice-editor-toolbar { align-items: flex-start; flex-direction: column; }
+}
+@page a4NoticePortrait { size: A4 portrait; margin: 0; }
+@page a4NoticeLandscape { size: A4 landscape; margin: 0; }
+@media print {
+  html.a4-notice-print-mode,
+  html.a4-notice-print-mode body { width: auto !important; min-height: 0 !important; margin: 0 !important; background: #fff !important; }
+  html.a4-notice-print-mode body * { visibility: hidden !important; }
+  html.a4-notice-print-mode .a4-notice-print-page,
+  html.a4-notice-print-mode .a4-notice-print-page * { visibility: visible !important; }
+  html.a4-notice-print-mode .studio-shell,
+  html.a4-notice-print-mode .studio-shell > .main-column,
+  html.a4-notice-print-mode .main-column > .main-content,
+  html.a4-notice-print-mode .main-content > .a4-notice-library { display: contents !important; }
+  html.a4-notice-print-mode .studio-shell > .sidebar,
+  html.a4-notice-print-mode .studio-shell > .mobile-overlay,
+  html.a4-notice-print-mode .main-column > .topbar,
+  html.a4-notice-print-mode .main-content > :not(.a4-notice-library),
+  html.a4-notice-print-mode .a4-notice-library > .no-print { display: none !important; }
+  html.a4-notice-print-mode .a4-notice-print-host { display: block !important; position: static !important; }
+  html.a4-notice-print-mode .a4-notice-paper { width: 210mm !important; height: 297mm !important; max-width: none !important; margin: 0 !important; overflow: hidden !important; border-width: 1mm !important; page: a4NoticePortrait; }
+  html.a4-notice-print-mode .a4-notice-paper.landscape { width: 297mm !important; height: 210mm !important; page: a4NoticeLandscape; }
+  html.a4-notice-print-mode .a4-notice-paper.a4-notice-bold { border-width: 0 !important; }
+  html.a4-notice-print-mode .a4-notice-paper.a4-notice-property { border-width: 1.5mm !important; }
+  html.a4-notice-print-mode .a4-notice-inner { height: 100% !important; }
+}
 .bookshop-dialog-eyebrow { margin: 0; color: #5f8b70; font-size: 9px; font-weight: 800; letter-spacing: .12em; }
 .bookshop-welcome-dialog h2 { max-width: 460px; margin: 8px auto 0; color: #28443a; font-size: 23px; font-weight: 800; line-height: 1.45; }
 .bookshop-welcome-user { margin: 8px 0 0; color: #527361; font-size: 13px; font-weight: 750; overflow-wrap: anywhere; }
@@ -1974,7 +2091,14 @@ button { cursor: pointer; }
   html[data-theme="dark"] .preview-stage,
   html[data-theme="dark"] .editor-stage,
   html[data-theme="dark"] .custom-item-preview-wrap,
+  html[data-theme="dark"] .custom-mini-preview,
   html[data-theme="dark"] .a4-preview { background-color: #202b2d; }
+  html[data-theme="dark"] .custom-mini-preview { border-color: #354345; }
+  html[data-theme="dark"] .custom-print-studio [aria-label="Selected sticker editor"] {
+    border-color: #354345;
+    background-color: #1a2325;
+    color: #e1e9e7;
+  }
   html[data-theme="dark"] .text-input,
   html[data-theme="dark"] .search-box,
   html[data-theme="dark"] .search-input,

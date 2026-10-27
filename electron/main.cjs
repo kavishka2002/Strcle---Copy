@@ -409,6 +409,29 @@ if (!app.requestSingleInstanceLock()) {
     return createPrintPreview(mainWindow.webContents, orientation);
   });
 
+  ipcMain.handle("print-with-dialog", (event, options) => {
+    assertMainWindowSender(event);
+    const orientation = options?.orientation ?? "portrait";
+    if (orientation !== "portrait" && orientation !== "landscape") {
+      throw new TypeError("Print orientation must be portrait or landscape.");
+    }
+    return new Promise((resolve, reject) => {
+      mainWindow.webContents.print({
+        silent: false,
+        printBackground: true,
+        landscape: orientation === "landscape"
+      }, (success, failureReason) => {
+        if (success) {
+          resolve({ status: "printed", printerName: "selected printer" });
+        } else if (failureReason.toLowerCase().includes("cancel")) {
+          resolve({ status: "cancelled" });
+        } else {
+          reject(new Error(`Could not print the page: ${failureReason || "the printer reported an unknown error."}`));
+        }
+      });
+    });
+  });
+
   ipcMain.handle("print-pdf-data", async (event, pdfData) => {
     assertMainWindowSender(event);
     if (!(pdfData instanceof Uint8Array) || pdfData.byteLength > 100 * 1024 * 1024) {

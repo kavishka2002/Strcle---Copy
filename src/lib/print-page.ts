@@ -2,6 +2,10 @@ export type PrintPageResult =
   | { status: "browser" }
   | { status: "previewed" }
   | { status: "printed"; printerName: string };
+export type PrintDialogResult =
+  | { status: "browser" }
+  | { status: "cancelled" }
+  | { status: "printed"; printerName: string };
 
 async function waitForPageToRender(): Promise<void> {
   if (typeof document === "undefined") return;
@@ -44,6 +48,19 @@ export async function printCurrentPage(options?: { orientation?: "portrait" | "l
     await waitForPageToRender();
     return window.littlePaperDesktop.printCurrentPage(options);
   }
+  window.print();
+  return { status: "browser" };
+}
+
+export async function printCurrentPageWithDialog(options?: { orientation?: "portrait" | "landscape" }): Promise<PrintDialogResult> {
+  if (window.littlePaperDesktop?.isDesktop) {
+    if (typeof window.littlePaperDesktop.printWithDialog !== "function") {
+      throw new Error("This desktop app needs the latest print update. Reinstall LittlePaper to print.");
+    }
+    await waitForPageToRender();
+    return window.littlePaperDesktop.printWithDialog(options);
+  }
+  await waitForPageToRender();
   window.print();
   return { status: "browser" };
 }
