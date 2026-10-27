@@ -11,8 +11,8 @@
     "desktop:build": "node scripts/build-desktop.mjs",
     "desktop:start": "electron .",
     "desktop:dev": "npm run desktop:build && npm run desktop:start",
-    "desktop:installer": "npm run desktop:build && electron-builder --win nsis",
-    "desktop:release": "npm run desktop:build && electron-builder --win nsis --publish always",
+    "desktop:installer": "npm run desktop:build && electron-builder --win nsis --publish never",
+    "desktop:release": "npm run desktop:build && electron-builder --win nsis --publish never",
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -61,7 +61,7 @@
   "build": {
     "appId": "lk.littlepaper.desktop",
     "productName": "LittlePaper",
-    "artifactName": "${productName} Setup ${version}.${ext}",
+    "artifactName": "${productName}-Setup-${version}.${ext}",
     "directories": {
       "output": "release"
     },

@@ -13,8 +13,11 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 90
     steps:
-      - name: Check out source
+      - name: Check out the tagged commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -22,69 +25,61 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Verify the tag matches package version
+      - name: Verify the tag, package version, and checked-out commit
         shell: bash
         run: |
-          node -e 'const version = require("./package.json").version; if (process.env.GITHUB_REF_NAME !== "v" + version) { console.error("Tag must match package.json version " + version); process.exit(1); }'
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "Release tags must use stable vMAJOR.MINOR.PATCH versions." >&2
+            exit 1
+          fi
+          tag_version="${GITHUB_REF_NAME#v}"
+          package_version="$(node -p 'require("./package.json").version')"
+          lock_version="$(node -p 'require("./package-lock.json").version')"
+          root_lock_version="$(node -p 'require("./package-lock.json").packages[""].version')"
+          if [[ "$tag_version" != "$package_version" ||
+                "$package_version" != "$lock_version" ||
+                "$package_version" != "$root_lock_version" ]]; then
+            echo "Tag, package.json, and package-lock.json versions must all match." >&2
+            exit 1
+          fi
+          checked_out_commit="$(git rev-parse HEAD)"
+          tagged_commit="$(git rev-parse "${GITHUB_REF_NAME}^{commit}")"
+          if [[ "$checked_out_commit" != "$tagged_commit" ]]; then
+            echo "The checked-out commit does not match the release tag." >&2
+            exit 1
+          fi
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Windows installer without publishing
-        shell: bash
-        run: |
-          npm run desktop:build
-          npx electron-builder --win nsis --publish never
+      - name: Run tests
+        run: npm test
 
-      - name: Prepare and validate update assets
+      - name: Run lint
+        run: npm run lint
+
+      - name: Check types
+        run: npm run typecheck
+
+      - name: Build desktop production files
+        run: npm run desktop:build
+
+      - name: Build Windows installer without publishing
+        run: npx electron-builder --win nsis --publish never
+
+      - name: Validate generated update assets
+        shell: bash
+        run: node scripts/verify-desktop-release.cjs release "$GITHUB_REF_NAME"
+
+      - name: Refuse to alter an existing release
         shell: bash
         run: |
-          version="$(node -p 'require("./package.json").version')"
-          installer="release/LittlePaper Setup ${version}.exe"
-          blockmap="${installer}.blockmap"
-          safe_installer="release/LittlePaper-Setup-${version}.exe"
-          safe_blockmap="${safe_installer}.blockmap"
-          manifest="release/latest.yml"
-          test -s "$installer"
-          test -s "$blockmap"
-          test -s "$manifest"
-          cp "$installer" "$safe_installer"
-          cp "$blockmap" "$safe_blockmap"
-          test -s "$safe_installer"
-          test -s "$safe_blockmap"
-          RELEASE_VERSION="$version" node -e '
-            const fs = require("node:fs");
-            const crypto = require("node:crypto");
-            const [manifestPath, installerPath, installerName] = process.argv.slice(1);
-            async function validate() {
-              const manifest = fs.readFileSync(manifestPath, "utf8");
-              const scalar = key => {
-                const match = manifest.match(new RegExp(`^${key}: (.+)$`, "m"));
-                return match?.[1];
-              };
-              const fileSize = manifest.match(/^\s+size: (\d+)$/m)?.[1];
-              const actualSize = fs.statSync(installerPath).size;
-              const hash = crypto.createHash("sha512");
-              await new Promise((resolve, reject) => {
-                const stream = fs.createReadStream(installerPath);
-                stream.on("data", chunk => hash.update(chunk));
-                stream.once("error", reject);
-                stream.once("end", resolve);
-              });
-              const actualSha512 = hash.digest("base64");
-              if (scalar("version") !== process.env.RELEASE_VERSION ||
-                  scalar("path") !== installerName ||
-                  !manifest.split(/\r?\n/).some(line => line.trim() === `- url: ${installerName}`) ||
-                  fileSize !== String(actualSize) ||
-                  scalar("sha512") !== actualSha512) {
-                throw new Error("latest.yml does not match the installer version, filename, size, and SHA-512.");
-              }
-            }
-            validate().catch(error => {
-              console.error(error);
-              process.exitCode = 1;
-            });
-          ' "$manifest" "$safe_installer" "$(basename "$safe_installer")"
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "A release for $GITHUB_REF_NAME already exists; refusing to overwrite it." >&2
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create draft release
         shell: bash
@@ -93,11 +88,12 @@ jobs:
             --draft \
             --verify-tag \
             --title "LittlePaper $GITHUB_REF_NAME" \
+            --notes "LittlePaper $GITHUB_REF_NAME Windows desktop release" \
             --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload update assets to draft release
+      - name: Upload validated update assets
         shell: bash
         run: |
           version="$(node -p 'require("./package.json").version')"
@@ -109,20 +105,32 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify release assets before publishing
+      - name: Download and verify published draft assets
         shell: bash
         run: |
           version="$(node -p 'require("./package.json").version')"
+          installer="LittlePaper-Setup-${version}.exe"
+          blockmap="${installer}.blockmap"
           assets="$(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name' --repo "$GITHUB_REPOSITORY")"
-          for asset in \
-            "LittlePaper-Setup-${version}.exe" \
-            "latest.yml" \
-            "LittlePaper-Setup-${version}.exe.blockmap"; do
-            if ! grep -Fxq "$asset" <<< "$assets"; then
+          for asset in "$installer" "latest.yml" "$blockmap"; do
+            if ! grep -Fxq -- "$asset" <<< "$assets"; then
               echo "Required release asset is missing: $asset" >&2
               exit 1
             fi
           done
-          gh release edit "$GITHUB_REF_NAME" --draft=false --repo "$GITHUB_REPOSITORY"
+          verify_directory="$(node -e 'const fs = require("node:fs"); const os = require("node:os"); const path = require("node:path"); process.stdout.write(fs.mkdtempSync(path.join(os.tmpdir(), "littlepaper-release-verify-")))')"
+          gh release download "$GITHUB_REF_NAME" \
+            --pattern "$installer" \
+            --pattern "latest.yml" \
+            --pattern "$blockmap" \
+            --dir "$verify_directory" \
+            --repo "$GITHUB_REPOSITORY"
+          node scripts/verify-desktop-release.cjs release "$version" "$verify_directory"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish verified release
+        shell: bash
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
