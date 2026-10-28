@@ -4,15 +4,18 @@ import { englishFonts, fontCategories, fontPreviewText, normalizeFontSelection, 
 describe("local font catalog", () => {
   it("offers the requested English and Sinhala families across the listed categories", () => {
     expect(englishFonts.map(font => font.family)).toHaveLength(12);
-    expect(sinhalaFonts.map(font => font.family)).toEqual(["Noto Sans Sinhala", "Noto Serif Sinhala", "Abhaya Libre", "Gemunu Libre", "Yaldevi"]);
+    expect(sinhalaFonts.map(font => font.family)).toEqual(["Noto Sans Sinhala", "Noto Serif Sinhala", "Abhaya Libre", "Gemunu Libre", "Yaldevi", "Maname", "AdBhashitha"]);
     expect(new Set(englishFonts.map(font => font.category))).toEqual(new Set(fontCategories));
     expect(fontPreviewText.sinhala).toContain("ශ්‍රී ලංකාව");
     expect(fontPreviewText.sinhala).toContain("ක්‍රියාකාරකම්");
+    expect(fontPreviewText.sinhala).toContain("0123456789");
   });
 
   it("uses a Sinhala-capable fallback and preserves the old bold-field default", () => {
     expect(textFontStack("Poppins", "Abhaya Libre")).toBe('"Poppins", "Abhaya Libre", "Noto Sans Sinhala", sans-serif');
     expect(normalizeFontSelection("Noto Sans Sinhala")).toEqual({ english: "Inter", sinhala: "Noto Sans Sinhala" });
+    expect(normalizeFontSelection("Maname")).toEqual({ english: "Inter", sinhala: "Maname" });
+    expect(normalizeFontSelection("AdBhashitha")).toEqual({ english: "Inter", sinhala: "AdBhashitha" });
     expect(resolvedFontWeight({ bold: true })).toBe(700);
     expect(resolvedFontWeight({ bold: false, fontWeight: 500 })).toBe(500);
   });

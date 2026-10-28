@@ -1263,12 +1263,12 @@ export function StickerStudio() {
                     <div id="sinhala-alphabet-letters" role="tabpanel" className="rounded-lg border border-[#e7eee9] bg-white p-2">
                       <p className="mb-2 text-[10px] text-slate-500">{activeAlphabetSection.description}</p>
                       <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8" lang="si">
-                        {activeAlphabetSection.letters.map((letter, index) => <button type="button" key={`${activeAlphabetSection.id}-${index}`} className="grid min-h-10 place-items-center rounded-lg border border-[#e5ebe7] bg-[#fffdfa] px-1 text-lg text-[#2d6555] transition hover:border-[#397b68] hover:bg-[#eff7f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#397b68]" aria-label={`Add ${letter} to letter preview`} onMouseDown={event => event.preventDefault()} onClick={() => setSinhalaAlphabetDraft(current => [...current, letter])} style={{ fontFamily: '"Noto Sans Sinhala", sans-serif' }}>{letter}</button>)}
+                        {activeAlphabetSection.letters.map((letter, index) => <button type="button" key={`${activeAlphabetSection.id}-${index}`} className="grid min-h-10 place-items-center rounded-lg border border-[#e5ebe7] bg-[#fffdfa] px-1 text-lg text-[#2d6555] transition hover:border-[#397b68] hover:bg-[#eff7f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#397b68]" aria-label={`Add ${letter} to letter preview`} onMouseDown={event => event.preventDefault()} onClick={() => setSinhalaAlphabetDraft(current => [...current, letter])} style={{ fontFamily: textFontStack("Inter", text.sinhalaFontFamily) }}>{letter}</button>)}
                       </div>
                     </div>
                     <div className="rounded-lg border border-[#e7eee9] bg-white p-3">
                       <span className="field-label">Selected text preview</span>
-                      <div lang="si" dir="auto" aria-live="polite" className="mt-1 min-h-10 break-words rounded-md bg-[#f8faf8] px-3 py-2 text-xl text-[#26394a]" style={{ fontFamily: '"Noto Sans Sinhala", sans-serif' }}>{alphabetPreview || <span className="text-sm text-slate-400">Your selected letters will appear here.</span>}</div>
+                      <div lang="si" dir="auto" aria-live="polite" className="mt-1 min-h-10 break-words rounded-md bg-[#f8faf8] px-3 py-2 text-xl text-[#26394a]" style={{ fontFamily: textFontStack("Inter", text.sinhalaFontFamily) }}>{alphabetPreview || <span className="text-sm text-slate-400">Your selected letters will appear here.</span>}</div>
                       <div className="mt-2 flex flex-wrap justify-end gap-2">
                         <button type="button" className="small-action" disabled={sinhalaAlphabetDraft.length === 0} onMouseDown={event => event.preventDefault()} onClick={() => setSinhalaAlphabetDraft(current => current.slice(0, -1))}>Backspace</button>
                         <button type="button" className="small-action" disabled={sinhalaAlphabetDraft.length === 0} onMouseDown={event => event.preventDefault()} onClick={() => setSinhalaAlphabetDraft([])}>Clear all</button>
@@ -1276,7 +1276,7 @@ export function StickerStudio() {
                       </div>
                     </div>
                   </div>}
-                  <p className="mt-2 text-[10px] leading-4 text-slate-500">The text box above remains available for your regular keyboard or Sinhala IME. Noto Sans Sinhala is bundled with the app and works offline.</p>
+                  <p className="mt-2 text-[10px] leading-4 text-slate-500">The text box above remains available for your regular keyboard or Sinhala IME. The selected Sinhala font is bundled with the app and works offline.</p>
                 </section>
                 <div className="sticker-font-controls space-y-3 rounded-xl border border-[#eee9e2] bg-[#fffdfa] p-3">
                   <label className="field-label block">English font<select className="text-input mt-2" value={text.fontFamily} onChange={e => updateText(text.id, { fontFamily: e.target.value as EnglishFontFamily })}>{fontCategories.map(category => <optgroup key={category} label={category}>{englishFonts.filter(font => font.category === category).map(font => <option key={font.family} value={font.family}>{font.family}</option>)}</optgroup>)}</select></label>

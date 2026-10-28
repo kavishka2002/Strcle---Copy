@@ -16,12 +16,14 @@ import {
   type SinhalaHodiyaSection
 } from "@/data/sinhala-hodiya";
 import { printCurrentPage } from "@/lib/print-page";
+import { sinhalaFonts } from "@/lib/font-catalog";
+import type { SinhalaFontFamily } from "@/types";
 
-type HodiyaFont = "Noto Sans Sinhala" | "Noto Serif Sinhala" | "Abhaya Libre" | "Gemunu Libre" | "Yaldevi" | "Inter";
+type HodiyaFont = SinhalaFontFamily | "Inter";
 type LetterShape = "rounded" | "square" | "circle";
 type LetterStyle = { fontFamily: HodiyaFont; color: string; background: string };
 type WorksheetGroup = { id: string; title: string; description: string; letters: string[]; sinhala: boolean };
-const hodiyaFonts: HodiyaFont[] = ["Noto Sans Sinhala", "Noto Serif Sinhala", "Abhaya Libre", "Gemunu Libre", "Yaldevi", "Inter"];
+const hodiyaFonts: HodiyaFont[] = [...sinhalaFonts.map(font => font.family), "Inter"];
 const isLetterShape = (shape: string): shape is LetterShape => ["rounded", "square", "circle"].includes(shape);
 
 const defaultLetterStyle: LetterStyle = {
@@ -29,14 +31,7 @@ const defaultLetterStyle: LetterStyle = {
   color: "#26394a",
   background: "#ffffff"
 };
-const defaultLetterStyleByFont: Record<HodiyaFont, string> = {
-  "Noto Sans Sinhala": '"Noto Sans Sinhala", sans-serif',
-  "Noto Serif Sinhala": '"Noto Serif Sinhala", "Noto Sans Sinhala", sans-serif',
-  "Abhaya Libre": '"Abhaya Libre", "Noto Sans Sinhala", serif',
-  "Gemunu Libre": '"Gemunu Libre", "Noto Sans Sinhala", sans-serif',
-  Yaldevi: '"Yaldevi", "Noto Sans Sinhala", sans-serif',
-  Inter: '"Inter", "Noto Sans Sinhala", sans-serif'
-};
+const letterFontStack = (font: HodiyaFont) => `"${font}", "Noto Sans Sinhala", sans-serif`;
 const isHodiyaFont = (font: string): font is HodiyaFont => hodiyaFonts.some(availableFont => availableFont === font);
 
 function makeWorksheetGroups(includeSinhalaNumerals: boolean, includeEnglish: boolean): WorksheetGroup[] {
@@ -84,7 +79,7 @@ function LetterGrid({
         const style = styleFor(group.id, letter);
         const selectionKey = hodiyaLetterSelectionKey(group.id, index);
         return <div className="hodiya-letter-option" key={selectionKey}>
-          <button type="button" className={`hodiya-letter-tile ${selectedLetterStyleKey === hodiyaLetterStyleKey(group.id, letter) ? "active-letter" : ""}`} aria-pressed={selectedLetterStyleKey === hodiyaLetterStyleKey(group.id, letter)} aria-label={`Customize letter ${letter}`} onClick={() => onSelect(group.id, letter)} lang={/[\u0D80-\u0DFF]/.test(letter) ? "si" : "en"} style={{ color: style.color, backgroundColor: style.background, fontFamily: defaultLetterStyleByFont[style.fontFamily], fontSize: `${fontSize}px`, minHeight: `${Math.max(45, fontSize * 1.45)}px`, borderRadius: shape === "square" ? "0" : shape === "circle" ? "50%" : "9px", ...(shape === "circle" ? { aspectRatio: "1", minHeight: "unset" } : {}) }}>{letter}</button>
+          <button type="button" className={`hodiya-letter-tile ${selectedLetterStyleKey === hodiyaLetterStyleKey(group.id, letter) ? "active-letter" : ""}`} aria-pressed={selectedLetterStyleKey === hodiyaLetterStyleKey(group.id, letter)} aria-label={`Customize letter ${letter}`} onClick={() => onSelect(group.id, letter)} lang={/[\u0D80-\u0DFF]/.test(letter) ? "si" : "en"} style={{ color: style.color, backgroundColor: style.background, fontFamily: letterFontStack(style.fontFamily), fontSize: `${fontSize}px`, minHeight: `${Math.max(45, fontSize * 1.45)}px`, borderRadius: shape === "square" ? "0" : shape === "circle" ? "50%" : "9px", ...(shape === "circle" ? { aspectRatio: "1", minHeight: "unset" } : {}) }}>{letter}</button>
           <input type="checkbox" className="hodiya-print-select" checked={selectedLetters.has(selectionKey)} aria-label={`Include ${letter} in the printed worksheet`} onChange={event => onInclude(group.id, index, event.target.checked)}/>
         </div>;
       })}
@@ -215,12 +210,12 @@ export function SinhalaHodiya() {
         <aside className="hodiya-settings-column">
           <section className="soft-card hodiya-controls-card">
             <div className="hodiya-panel-heading"><div><h2>Selected letter</h2><p>Customize “{selectedLetter}” for the worksheet.</p></div></div>
-            <div className="hodiya-large-preview" lang={/[\u0D80-\u0DFF]/.test(selectedLetter) ? "si" : "en"} style={{ color: activeStyle.color, backgroundColor: activeStyle.background, fontFamily: defaultLetterStyleByFont[activeStyle.fontFamily], fontSize: `${fontSize}px`, borderRadius: shape === "square" ? "0" : shape === "circle" ? "50%" : "13px", ...(shape === "circle" ? { aspectRatio: "1", minHeight: "unset", width: "100%", maxWidth: "220px", justifySelf: "center" } : {}) }}>{selectedLetter}</div>
+            <div className="hodiya-large-preview" lang={/[\u0D80-\u0DFF]/.test(selectedLetter) ? "si" : "en"} style={{ color: activeStyle.color, backgroundColor: activeStyle.background, fontFamily: letterFontStack(activeStyle.fontFamily), fontSize: `${fontSize}px`, borderRadius: shape === "square" ? "0" : shape === "circle" ? "50%" : "13px", ...(shape === "circle" ? { aspectRatio: "1", minHeight: "unset", width: "100%", maxWidth: "220px", justifySelf: "center" } : {}) }}>{selectedLetter}</div>
             <div className="flex flex-wrap gap-3">
               {letterStyles[selectedLetterStyleKey] && <button type="button" className="hodiya-reset-button" onClick={resetSelectedLetter}><RotateCcw size={13}/> Reset this letter&apos;s colours and font</button>}
               <button type="button" className="hodiya-reset-button" onClick={() => { setDefaultStyle(activeStyle); setLetterStyles({}); }}>Apply font and colours to all letters</button>
             </div>
-            <label className="field-label block">Font family<select className="text-input mt-2" value={activeStyle.fontFamily} onChange={event => { if (isHodiyaFont(event.target.value)) updateStyle({ fontFamily: event.target.value }); }}><option>Noto Sans Sinhala</option><option>Abhaya Libre</option><option>Noto Serif Sinhala</option><option>Gemunu Libre</option><option>Yaldevi</option><option>Inter</option></select></label>
+            <label className="field-label block">Font family<select className="text-input mt-2" value={activeStyle.fontFamily} onChange={event => { if (isHodiyaFont(event.target.value)) updateStyle({ fontFamily: event.target.value }); }}>{hodiyaFonts.map(font => <option key={font} value={font}>{font}</option>)}</select></label>
             <label className="field-label block">All letters font size · px<input className="text-input mt-2" type="number" min="12" max="72" value={fontSize} onChange={event => changeNumber(event.target.value, setFontSize, 12, 72)}/></label>
             <input aria-label="All letters font size" className="hodiya-range" type="range" min="12" max="72" value={fontSize} onChange={event => setFontSize(Number(event.target.value))}/>
             <label className="field-label block">Shape for all letters<select className="text-input mt-2" value={shape} onChange={event => { if (isLetterShape(event.target.value)) setShape(event.target.value); }}><option value="rounded">Rounded</option><option value="square">Square</option><option value="circle">Circle</option></select></label>
@@ -254,7 +249,7 @@ export function SinhalaHodiya() {
             <div className="hodiya-preview-grid" style={{ gridTemplateColumns: `repeat(${printLayout.columns}, minmax(0, 1fr))`, gap: `${Math.min(spacing, 12) / 2}px` }}>
               {group.letters.map((letter, index) => {
                 const style = styleFor(group.id, letter);
-                return <div key={`${group.id}-${letter}-${index}`} className="hodiya-preview-tile" lang={/[\u0D80-\u0DFF]/.test(letter) ? "si" : "en"} style={{ backgroundColor: style.background, color: style.color, fontFamily: defaultLetterStyleByFont[style.fontFamily], fontSize: `${fontSize}px`, minHeight: `${Math.max(40, fontSize * 1.45)}px`, borderRadius: shape === "square" ? "0" : shape === "circle" ? "50%" : "7px", ...(shape === "circle" ? { aspectRatio: "1", minHeight: "unset" } : {}) }}>{letter}</div>;
+                return <div key={`${group.id}-${letter}-${index}`} className="hodiya-preview-tile" lang={/[\u0D80-\u0DFF]/.test(letter) ? "si" : "en"} style={{ backgroundColor: style.background, color: style.color, fontFamily: letterFontStack(style.fontFamily), fontSize: `${fontSize}px`, minHeight: `${Math.max(40, fontSize * 1.45)}px`, borderRadius: shape === "square" ? "0" : shape === "circle" ? "50%" : "7px", ...(shape === "circle" ? { aspectRatio: "1", minHeight: "unset" } : {}) }}>{letter}</div>;
               })}
             </div>
           </section>)}
@@ -268,7 +263,7 @@ export function SinhalaHodiya() {
         <div className="hodiya-print-grid" style={{ gridTemplateColumns: `repeat(${printLayout.columns}, minmax(0, 1fr))`, gap: `${spacing}mm` }}>
           {chunk.map((letter, index) => {
             const style = styleFor(group.id, letter);
-            return <div key={`${group.id}-${chunkIndex}-${letter}-${index}`} className="hodiya-print-tile" lang={/[\u0D80-\u0DFF]/.test(letter) ? "si" : "en"} style={{ color: style.color, backgroundColor: style.background, fontFamily: defaultLetterStyleByFont[style.fontFamily], fontSize: `${fontSize * 0.75}pt`, minHeight: `${printLayout.tileSize}mm`, borderRadius: shape === "square" ? "0" : shape === "circle" ? "50%" : "1.5mm", ...(shape === "circle" ? { width: `min(100%, ${printLayout.tileSize}mm)`, aspectRatio: "1", minHeight: "unset", justifySelf: "center" } : {}) }}>{letter}</div>;
+            return <div key={`${group.id}-${chunkIndex}-${letter}-${index}`} className="hodiya-print-tile" lang={/[\u0D80-\u0DFF]/.test(letter) ? "si" : "en"} style={{ color: style.color, backgroundColor: style.background, fontFamily: letterFontStack(style.fontFamily), fontSize: `${fontSize * 0.75}pt`, minHeight: `${printLayout.tileSize}mm`, borderRadius: shape === "square" ? "0" : shape === "circle" ? "50%" : "1.5mm", ...(shape === "circle" ? { width: `min(100%, ${printLayout.tileSize}mm)`, aspectRatio: "1", minHeight: "unset", justifySelf: "center" } : {}) }}>{letter}</div>;
           })}
         </div>
       </section>))}

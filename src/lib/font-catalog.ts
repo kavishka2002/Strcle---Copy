@@ -26,7 +26,9 @@ export const sinhalaFonts: Array<{
   { family: "Noto Serif Sinhala", category: "Elegant" },
   { family: "Abhaya Libre", category: "Elegant" },
   { family: "Gemunu Libre", category: "Cute and playful" },
-  { family: "Yaldevi", category: "Modern and professional" }
+  { family: "Yaldevi", category: "Modern and professional" },
+  { family: "Maname", category: "Simple and readable" },
+  { family: "AdBhashitha", category: "Simple and readable" }
 ];
 
 export const fontCategories = [
@@ -40,7 +42,7 @@ export const fontCategories = [
 
 export const fontPreviewText = {
   english: "Amaya Perera · Grade 4",
-  sinhala: "සිංහල · ශ්‍රී ලංකාව · ක්‍රියාකාරකම්"
+  sinhala: "සිංහල · ශ්‍රී ලංකාව · ක්‍රියාකාරකම් · 0123456789"
 };
 
 function isSinhalaFontFamily(value: string): value is SinhalaFontFamily {

@@ -1,5 +1,6 @@
-const CACHE_NAME = "little-paper-shell-v2";
+const CACHE_NAME = "little-paper-shell-v3";
 const ROOT_URL = "/";
+const BUNDLED_FONTS = ["/fonts/AdBhashitha.ttf", "/fonts/maname.ttf"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -12,7 +13,7 @@ self.addEventListener("install", event => {
           const html = await shell.text();
           const assets = [...html.matchAll(/(?:src|href)="([^"]*\/_next\/static\/[^"]+)"/g)]
             .map(match => new URL(match[1], self.location.origin).href);
-          await Promise.all([...new Set(assets)].map(asset => cache.add(asset).catch(error => {
+          await Promise.all([...new Set([...assets, ...BUNDLED_FONTS])].map(asset => cache.add(asset).catch(error => {
             console.warn("Could not pre-cache an application asset.", asset, error);
           })));
         } catch (error) {
@@ -89,7 +90,7 @@ self.addEventListener("fetch", event => {
 
   if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/starter-art/") ||
       url.pathname === "/bookshop-icon.svg" || url.pathname === "/singlish_core_bg.wasm" ||
-      decodedPath.startsWith("/පින්තුර/")) {
+      decodedPath.startsWith("/පින්තුර/") || decodedPath.startsWith("/fonts/")) {
     event.respondWith(
       caches.match(request).then(cached => {
         if (cached) return cached;
