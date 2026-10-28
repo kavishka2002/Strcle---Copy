@@ -4,11 +4,13 @@ import {
   englishHodiyaNumerals,
   getSelectedHodiyaGroups,
   getHodiyaPrintLayout,
+  getHodiyaRepeatPrintLayout,
   getSinhalaHodiyaGroups,
   hodiyaLetterSelectionKey,
   hodiyaLetterStyleKey,
   sinhalaHodiyaNumerals,
   sinhalaHodiyaSections,
+  splitHodiyaInput,
   splitHodiyaLetters
 } from "./sinhala-hodiya";
 
@@ -34,6 +36,11 @@ describe("Sinhala Hodiya worksheet content", () => {
     expect(splitHodiyaLetters(["අ"], 0, 0)).toEqual([["අ"]]);
   });
 
+  it("splits typed Sinhala input by visible grapheme without breaking vowel signs", () => {
+    expect(splitHodiyaInput("ක කා\nකි")).toEqual(["ක", "කා", "කි"]);
+    expect(splitHodiyaInput("  ")).toEqual([]);
+  });
+
   it("keeps print selections distinct by group and includes only selected letters", () => {
     const groups = [
       { id: "vowels", title: "Vowels", letters: ["අ", "ආ"] },
@@ -49,6 +56,14 @@ describe("Sinhala Hodiya worksheet content", () => {
       { id: "combinations", title: "Combinations", letters: ["අ"] }
     ]);
     expect(getSelectedHodiyaGroups(groups, new Set())).toEqual([]);
+  });
+
+  it("includes custom typed letters in the selected printable worksheet", () => {
+    const letters = splitHodiyaInput("ක කා කි");
+    const customGroup = { id: "custom", title: "My letters", letters };
+    const selected = new Set(letters.map((_, index) => hodiyaLetterSelectionKey("custom", index)));
+
+    expect(getSelectedHodiyaGroups([customGroup], selected)).toEqual([customGroup]);
   });
 
   it("provides only the full Sinhala Hodiya sections for the full-Hodiya print option", () => {
@@ -71,5 +86,18 @@ describe("Sinhala Hodiya worksheet content", () => {
     expect(large.tileSize).toBeGreaterThan(regular.tileSize);
     expect(large.columns * large.tileSize + (large.columns - 1) * 20).toBeLessThanOrEqual(190);
     expect(large.rows * large.tileSize + (large.rows - 1) * 20).toBeLessThanOrEqual(245);
+  });
+
+  it("fills a single A4 sheet with repeated letters while respecting tile size and spacing", () => {
+    const regular = getHodiyaRepeatPrintLayout(32, 14, 8, 1);
+    const large = getHodiyaRepeatPrintLayout(72, 14, 20, 2);
+
+    expect(regular.columns * regular.tileSize + (regular.columns - 1) * 8).toBeLessThanOrEqual(190);
+    expect(regular.rows * regular.tileSize + (regular.rows - 1) * 8).toBeLessThanOrEqual(277);
+    expect(large.columns * large.tileSize + (large.columns - 1) * 20).toBeLessThanOrEqual(190);
+    expect(large.rows * large.tileSize + (large.rows - 1) * 20).toBeLessThanOrEqual(277);
+    expect(regular.rows * regular.columns).toBeGreaterThan(1);
+    expect(large.rows * large.columns).toBeLessThan(regular.rows * regular.columns);
+    expect(splitHodiyaLetters(Array.from({ length: regular.rows * regular.columns }, () => "අ"), regular.rows, regular.columns)).toHaveLength(1);
   });
 });

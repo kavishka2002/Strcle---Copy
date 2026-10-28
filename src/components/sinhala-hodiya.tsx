@@ -6,17 +6,19 @@ import {
   englishHodiyaLetters,
   englishHodiyaNumerals,
   getHodiyaPrintLayout,
+  getHodiyaRepeatPrintLayout,
   getSelectedHodiyaGroups,
   getSinhalaHodiyaGroups,
   hodiyaLetterSelectionKey,
   hodiyaLetterStyleKey,
   sinhalaHodiyaNumerals,
   sinhalaHodiyaSections,
+  splitHodiyaInput,
   splitHodiyaLetters,
   type SinhalaHodiyaSection
 } from "@/data/sinhala-hodiya";
 import { printCurrentPage } from "@/lib/print-page";
-import { sinhalaFonts } from "@/lib/font-catalog";
+import { fontPreviewText, sinhalaFonts } from "@/lib/font-catalog";
 import type { SinhalaFontFamily } from "@/types";
 
 type HodiyaFont = SinhalaFontFamily | "Inter";
@@ -34,7 +36,7 @@ const defaultLetterStyle: LetterStyle = {
 const letterFontStack = (font: HodiyaFont) => `"${font}", "Noto Sans Sinhala", sans-serif`;
 const isHodiyaFont = (font: string): font is HodiyaFont => hodiyaFonts.some(availableFont => availableFont === font);
 
-function makeWorksheetGroups(includeSinhalaNumerals: boolean, includeEnglish: boolean): WorksheetGroup[] {
+function makeWorksheetGroups(includeSinhalaNumerals: boolean, includeEnglish: boolean, customLetters: string[] = []): WorksheetGroup[] {
   return [
     ...sinhalaHodiyaSections.map(section => ({
       ...section,
@@ -44,7 +46,8 @@ function makeWorksheetGroups(includeSinhalaNumerals: boolean, includeEnglish: bo
     ...(includeEnglish ? [
       { id: "english-letters", title: "English Letters", description: "A–Z", letters: englishHodiyaLetters, sinhala: false },
       { id: "english-numerals", title: "English Numbers", description: "0–9", letters: englishHodiyaNumerals, sinhala: false }
-    ] : [])
+    ] : []),
+    ...(customLetters.length ? [{ id: "custom", title: "My letters", description: "Your typed Sinhala letters", letters: customLetters, sinhala: true }] : [])
   ];
 }
 
@@ -94,6 +97,8 @@ export function SinhalaHodiya() {
   const [fontSize, setFontSize] = useState(32);
   const [shape, setShape] = useState<LetterShape>("rounded");
   const [letterStyles, setLetterStyles] = useState<Record<string, LetterStyle>>({});
+  const [customLetterInput, setCustomLetterInput] = useState("");
+  const [customLetters, setCustomLetters] = useState<string[]>([]);
   const [selectedLetters, setSelectedLetters] = useState<Set<string>>(() => new Set(
     makeWorksheetGroups(false, false).flatMap(group => group.letters.map((_, index) => hodiyaLetterSelectionKey(group.id, index)))
   ));
@@ -103,13 +108,21 @@ export function SinhalaHodiya() {
   const [columns, setColumns] = useState(8);
   const [includeSinhalaNumerals, setIncludeSinhalaNumerals] = useState(false);
   const [includeEnglish, setIncludeEnglish] = useState(false);
-  const [printMode, setPrintMode] = useState<"selected" | "sinhala">("selected");
+  const [printMode, setPrintMode] = useState<"selected" | "sinhala" | "repeat">("selected");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
-  const groups = makeWorksheetGroups(includeSinhalaNumerals, includeEnglish);
+  const groups = makeWorksheetGroups(includeSinhalaNumerals, includeEnglish, customLetters);
   const printableGroups = getSelectedHodiyaGroups(groups, selectedLetters);
   const fullSinhalaGroups = getSinhalaHodiyaGroups();
-  const printWorksheetGroups = printMode === "sinhala" ? fullSinhalaGroups : printableGroups;
+  const repeatLayout = getHodiyaRepeatPrintLayout(fontSize, tileSize, spacing, Array.from(selectedLetter).length);
+  const repeatGroup: WorksheetGroup = {
+    id: "repeated-letter",
+    title: selectedLetter,
+    description: "Repeated letter",
+    letters: Array.from({ length: repeatLayout.rows * repeatLayout.columns }, () => selectedLetter),
+    sinhala: true
+  };
+  const printWorksheetGroups = printMode === "repeat" ? [repeatGroup] : printMode === "sinhala" ? fullSinhalaGroups : printableGroups;
   const selectedCount = printableGroups.reduce((count, group) => count + group.letters.length, 0);
   const worksheetLetterCount = printWorksheetGroups.reduce((count, group) => count + group.letters.length, 0);
   const longestLetter = Math.max(
@@ -117,6 +130,7 @@ export function SinhalaHodiya() {
     ...printWorksheetGroups.flatMap(group => group.letters.map(letter => Array.from(letter).length))
   );
   const printLayout = getHodiyaPrintLayout(fontSize, tileSize, spacing, rows, columns, longestLetter);
+  const currentPrintLayout = printMode === "repeat" ? repeatLayout : printLayout;
   const longestVisibleLetter = Math.max(
     1,
     ...groups.flatMap(group => group.letters.map(letter => Array.from(letter).length))
@@ -124,7 +138,9 @@ export function SinhalaHodiya() {
   const editorLayout = getHodiyaPrintLayout(fontSize, tileSize, spacing, rows, columns, longestVisibleLetter);
   const activeStyle = letterStyles[selectedLetterStyleKey] ?? defaultStyle;
 
-  const styleFor = (groupId: string, letter: string) => letterStyles[hodiyaLetterStyleKey(groupId, letter)] ?? defaultStyle;
+  const styleFor = (groupId: string, letter: string) => groupId === "repeated-letter"
+    ? activeStyle
+    : letterStyles[hodiyaLetterStyleKey(groupId, letter)] ?? defaultStyle;
   const updateIncludedLetter = (groupId: string, index: number, included: boolean) => {
     const key = hodiyaLetterSelectionKey(groupId, index);
     setSelectedLetters(previous => {
@@ -133,6 +149,30 @@ export function SinhalaHodiya() {
       else next.delete(key);
       return next;
     });
+  };
+  const addTypedLetters = () => {
+    setError("");
+    const letters = splitHodiyaInput(customLetterInput);
+    if (letters.length === 0) {
+      setError("Enter at least one Sinhala letter before adding it to the Hodiya.");
+      return;
+    }
+    if (letters.some(letter => !/[\u0D80-\u0DFF]/u.test(letter))) {
+      setError("Use only Sinhala letters in this Hodiya input.");
+      return;
+    }
+
+    const startIndex = customLetters.length;
+    const lastLetter = letters[letters.length - 1];
+    setCustomLetters(previous => [...previous, ...letters]);
+    setSelectedLetters(previous => {
+      const next = new Set(previous);
+      letters.forEach((_, index) => next.add(hodiyaLetterSelectionKey("custom", startIndex + index)));
+      return next;
+    });
+    setSelectedLetter(lastLetter);
+    setSelectedLetterStyleKey(hodiyaLetterStyleKey("custom", lastLetter));
+    setCustomLetterInput("");
   };
   const updateOptionalGroup = (groupId: "sinhala-numerals" | "english-letters", included: boolean, update: (value: boolean) => void) => {
     update(included);
@@ -165,10 +205,10 @@ export function SinhalaHodiya() {
     const parsed = Number(value);
     if (Number.isFinite(parsed)) setValue(Math.max(minimum, Math.min(maximum, Math.round(parsed))));
   };
-  const printWorksheet = async (mode: "selected" | "sinhala") => {
+  const printWorksheet = async (mode: "selected" | "sinhala" | "repeat") => {
     setError("");
     setNotice("");
-    const printGroups = mode === "sinhala" ? fullSinhalaGroups : printableGroups;
+    const printGroups = mode === "repeat" ? [repeatGroup] : mode === "sinhala" ? fullSinhalaGroups : printableGroups;
     const printCount = printGroups.reduce((count, group) => count + group.letters.length, 0);
     if (printCount === 0) {
       setError("Select at least one letter for the worksheet before printing.");
@@ -179,7 +219,7 @@ export function SinhalaHodiya() {
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
       const sample = printGroups.flatMap(group => group.letters).join("");
       const fontFamilies = [...new Set([...printGroups.flatMap(group => group.letters.map(letter => styleFor(group.id, letter).fontFamily)), defaultStyle.fontFamily])];
-      await Promise.all(fontFamilies.map(fontFamily => document.fonts.load(`700 ${fontSize}px "${fontFamily}"`, sample)));
+      await Promise.all(fontFamilies.map(fontFamily => document.fonts.load(`400 ${fontSize}px "${fontFamily}"`, sample)));
       await document.fonts.ready;
       document.documentElement.classList.add("hodiya-print-mode");
       const result = await printCurrentPage({ orientation: "portrait" });
@@ -196,13 +236,17 @@ export function SinhalaHodiya() {
     <div className="sinhala-hodiya-screen">
       <header className="hodiya-page-header">
         <div><span className="eyebrow">LEARN · PRACTISE · PRINT</span><h1 className="page-title">සිංහල හෝඩිය <span className="text-base font-medium text-slate-400">· Sinhala Hodiya</span></h1><p className="mt-2 text-sm text-slate-500">Explore Sinhala letters and create a clear A4 learning worksheet for children.</p></div>
-        <div className="hodiya-print-actions"><button type="button" className="primary-button" onClick={() => void printWorksheet("selected")}><Printer size={16}/> Print selected ({selectedCount})</button><button type="button" className="hodiya-print-all-button" onClick={() => void printWorksheet("sinhala")}><Printer size={16}/> Print full Sinhala Hodiya</button></div>
+        <div className="hodiya-print-actions"><button type="button" className="primary-button" onClick={() => void printWorksheet("selected")}><Printer size={16}/> Print selected ({selectedCount})</button><button type="button" className="hodiya-print-all-button" onClick={() => void printWorksheet("sinhala")}><Printer size={16}/> Print full Sinhala Hodiya</button><button type="button" className="hodiya-print-all-button" disabled={!/[\u0D80-\u0DFF]/.test(selectedLetter)} onClick={() => void printWorksheet("repeat")}><Printer size={16}/> Print this letter on A4</button></div>
       </header>
       {notice && <p className="status-message" role="status">{notice}</p>}
       {error && <p className="status-error" role="alert">{error}</p>}
       <div className="hodiya-workspace">
         <section className="hodiya-main-panel">
           <div className="hodiya-panel-heading"><div><h2>Letters and combinations</h2><p>Choose letters with the checkboxes, or print the complete Sinhala Hodiya.</p></div><div className="hodiya-selection-actions"><span className="step-number">{selectedCount} selected</span><button type="button" className="hodiya-selection-button" onClick={selectAllLetters}>Select all</button><button type="button" className="hodiya-selection-button" onClick={clearLetterSelection}>Clear</button></div></div>
+          <section className="mb-4 rounded-xl border border-[#dce9e1] bg-[#f7fbf8] p-3">
+            <label className="field-label block">Type Sinhala letters<textarea className="text-input mt-2 min-h-16 resize-y" lang="si" dir="auto" value={customLetterInput} onChange={event => setCustomLetterInput(event.target.value)} placeholder="උදා: ක කා කි" aria-describedby="hodiya-custom-letter-help"/></label>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2"><p id="hodiya-custom-letter-help" className="text-[10px] text-slate-500">Type one or more Sinhala letters, separated by spaces or new lines, then add them to your A4 worksheet.</p><button type="button" className="primary-button !px-3 !py-2" onClick={addTypedLetters}>Add typed letters</button></div>
+          </section>
           <div className="hodiya-letter-sections">
             {groups.map(group => <LetterGrid key={group.id} group={group} columns={editorLayout.columns} fontSize={fontSize} shape={shape} selectedLetterStyleKey={selectedLetterStyleKey} selectedLetters={selectedLetters} onSelect={(groupId, letter) => { setSelectedLetter(letter); setSelectedLetterStyleKey(hodiyaLetterStyleKey(groupId, letter)); }} onInclude={updateIncludedLetter} styleFor={styleFor}/>)}
           </div>
@@ -216,6 +260,7 @@ export function SinhalaHodiya() {
               <button type="button" className="hodiya-reset-button" onClick={() => { setDefaultStyle(activeStyle); setLetterStyles({}); }}>Apply font and colours to all letters</button>
             </div>
             <label className="field-label block">Font family<select className="text-input mt-2" value={activeStyle.fontFamily} onChange={event => { if (isHodiyaFont(event.target.value)) updateStyle({ fontFamily: event.target.value }); }}>{hodiyaFonts.map(font => <option key={font} value={font}>{font}</option>)}</select></label>
+            <div lang="si" className="rounded-lg border border-[#e9eee9] bg-white p-3 text-center text-base" style={{ fontFamily: letterFontStack(activeStyle.fontFamily) }}>{fontPreviewText.sinhala}</div>
             <label className="field-label block">All letters font size · px<input className="text-input mt-2" type="number" min="12" max="72" value={fontSize} onChange={event => changeNumber(event.target.value, setFontSize, 12, 72)}/></label>
             <input aria-label="All letters font size" className="hodiya-range" type="range" min="12" max="72" value={fontSize} onChange={event => setFontSize(Number(event.target.value))}/>
             <label className="field-label block">Shape for all letters<select className="text-input mt-2" value={shape} onChange={event => { if (isLetterShape(event.target.value)) setShape(event.target.value); }}><option value="rounded">Rounded</option><option value="square">Square</option><option value="circle">Circle</option></select></label>
@@ -246,7 +291,7 @@ export function SinhalaHodiya() {
           {printWorksheetGroups.length === 0 && <p className="hodiya-empty-selection">No letters selected. Check letters above to add them to the worksheet.</p>}
           {printWorksheetGroups.map(group => <section key={group.id} className="hodiya-preview-group">
             <h3 lang={group.sinhala ? "si" : "en"}>{group.title}</h3>
-            <div className="hodiya-preview-grid" style={{ gridTemplateColumns: `repeat(${printLayout.columns}, minmax(0, 1fr))`, gap: `${Math.min(spacing, 12) / 2}px` }}>
+                <div className="hodiya-preview-grid" style={{ gridTemplateColumns: `repeat(${currentPrintLayout.columns}, minmax(0, 1fr))`, gap: `${Math.min(spacing, 12) / 2}px` }}>
               {group.letters.map((letter, index) => {
                 const style = styleFor(group.id, letter);
                 return <div key={`${group.id}-${letter}-${index}`} className="hodiya-preview-tile" lang={/[\u0D80-\u0DFF]/.test(letter) ? "si" : "en"} style={{ backgroundColor: style.background, color: style.color, fontFamily: letterFontStack(style.fontFamily), fontSize: `${fontSize}px`, minHeight: `${Math.max(40, fontSize * 1.45)}px`, borderRadius: shape === "square" ? "0" : shape === "circle" ? "50%" : "7px", ...(shape === "circle" ? { aspectRatio: "1", minHeight: "unset" } : {}) }}>{letter}</div>;
@@ -256,14 +301,14 @@ export function SinhalaHodiya() {
         </div>
       </section>
     </div>
-    <div className="hodiya-print-root" aria-hidden="true">
-      <div className="hodiya-print-heading"><h1 lang="si">සිංහල හෝඩිය</h1><p>Learning worksheet · A4 portrait · 210 × 297 mm</p></div>
-      {printWorksheetGroups.map(group => splitHodiyaLetters(group.letters, printLayout.rows, printLayout.columns).map((chunk, chunkIndex) => <section key={`${group.id}-${chunkIndex}`} className="hodiya-print-section">
-        <header><h2 lang={group.sinhala ? "si" : "en"}>{group.title}{chunkIndex > 0 ? " · continued" : ""}</h2><span>{group.description}</span></header>
-        <div className="hodiya-print-grid" style={{ gridTemplateColumns: `repeat(${printLayout.columns}, minmax(0, 1fr))`, gap: `${spacing}mm` }}>
+    <div className={`hodiya-print-root ${printMode === "repeat" ? "hodiya-repeat-print-root" : ""}`} aria-hidden="true">
+      {printMode !== "repeat" && <div className="hodiya-print-heading"><h1 lang="si" style={{ fontFamily: letterFontStack(defaultStyle.fontFamily) }}>සිංහල හෝඩිය</h1><p>Learning worksheet · A4 portrait · 210 × 297 mm</p></div>}
+      {printWorksheetGroups.map(group => splitHodiyaLetters(group.letters, currentPrintLayout.rows, currentPrintLayout.columns).map((chunk, chunkIndex) => <section key={`${group.id}-${chunkIndex}`} className="hodiya-print-section">
+        {printMode !== "repeat" && <header><h2 lang={group.sinhala ? "si" : "en"} style={group.sinhala ? { fontFamily: letterFontStack(defaultStyle.fontFamily) } : undefined}>{group.title}{chunkIndex > 0 ? " · continued" : ""}</h2><span>{group.description}</span></header>}
+        <div className="hodiya-print-grid" style={{ gridTemplateColumns: `repeat(${currentPrintLayout.columns}, minmax(0, 1fr))`, gap: `${spacing}mm` }}>
           {chunk.map((letter, index) => {
             const style = styleFor(group.id, letter);
-            return <div key={`${group.id}-${chunkIndex}-${letter}-${index}`} className="hodiya-print-tile" lang={/[\u0D80-\u0DFF]/.test(letter) ? "si" : "en"} style={{ color: style.color, backgroundColor: style.background, fontFamily: letterFontStack(style.fontFamily), fontSize: `${fontSize * 0.75}pt`, minHeight: `${printLayout.tileSize}mm`, borderRadius: shape === "square" ? "0" : shape === "circle" ? "50%" : "1.5mm", ...(shape === "circle" ? { width: `min(100%, ${printLayout.tileSize}mm)`, aspectRatio: "1", minHeight: "unset", justifySelf: "center" } : {}) }}>{letter}</div>;
+            return <div key={`${group.id}-${chunkIndex}-${letter}-${index}`} className="hodiya-print-tile" lang={/[\u0D80-\u0DFF]/.test(letter) ? "si" : "en"} style={{ color: style.color, backgroundColor: style.background, fontFamily: letterFontStack(style.fontFamily), fontSize: `${fontSize * 0.75}pt`, minHeight: `${currentPrintLayout.tileSize}mm`, borderRadius: shape === "square" ? "0" : shape === "circle" ? "50%" : "1.5mm", ...(shape === "circle" ? { width: `min(100%, ${currentPrintLayout.tileSize}mm)`, aspectRatio: "1", minHeight: "unset", justifySelf: "center" } : {}) }}>{letter}</div>;
           })}
         </div>
       </section>))}

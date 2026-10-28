@@ -956,7 +956,8 @@ button { cursor: pointer; }
   .hodiya-page-header { flex-wrap: wrap; margin-bottom: 4px; }
   .hodiya-print-actions { display: flex; flex-wrap: wrap; gap: 8px; }
   .hodiya-print-all-button { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 7px; border: 1px solid #397b68; border-radius: 9px; padding: 9px 14px; color: #397b68; background: #fff; font-size: 12px; font-weight: 700; }
-  .hodiya-print-all-button:hover { background: #f0f7f3; }
+  .hodiya-print-all-button:hover:not(:disabled) { background: #f0f7f3; }
+  .hodiya-print-all-button:disabled { cursor: not-allowed; opacity: .5; }
   .hodiya-panel-heading { margin-bottom: 14px; }
   .hodiya-selection-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 7px; }
   .hodiya-selection-button { border: 1px solid #dfe8e2; border-radius: 7px; padding: 6px 9px; color: #397b68; font-size: 10px; font-weight: 650; }
@@ -1024,6 +1025,7 @@ button { cursor: pointer; }
     html.hodiya-print-mode .hodiya-print-root,
     html.hodiya-print-mode .hodiya-print-root * { visibility: visible !important; }
     html.hodiya-print-mode .hodiya-print-root { display: block !important; position: relative; box-sizing: border-box !important; width: 210mm !important; margin: 0 !important; padding: 10mm !important; background: #fff !important; color: #26394a; font-family: "Noto Sans Sinhala", sans-serif; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    html.hodiya-print-mode .hodiya-repeat-print-root .hodiya-print-section { margin: 0; }
     html.hodiya-print-mode .hodiya-print-heading { margin-bottom: 7mm; border-bottom: .35mm solid #dce5df; padding-bottom: 4mm; }
     html.hodiya-print-mode .hodiya-print-heading h1 { color: #26394a; font-size: 24pt; font-weight: 700; line-height: 1.45; }
     html.hodiya-print-mode .hodiya-print-heading p { margin-top: 2mm; color: #6f7d75; font-family: "Inter", sans-serif; font-size: 8pt; }

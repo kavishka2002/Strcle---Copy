@@ -31,6 +31,16 @@ export const englishHodiyaLetters = Array.from({ length: 26 }, (_, index) => Str
   .concat(Array.from({ length: 26 }, (_, index) => String.fromCharCode(97 + index)));
 export const englishHodiyaNumerals = Array.from({ length: 10 }, (_, index) => String(index));
 
+export function splitHodiyaInput(value: string): string[] {
+  const text = value.trim();
+  if (!text) return [];
+  if (typeof Intl.Segmenter === "function") {
+    return Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text), part => part.segment)
+      .filter(letter => !/^\s+$/u.test(letter));
+  }
+  return Array.from(text).filter(letter => !/^\s+$/u.test(letter));
+}
+
 export function getSinhalaHodiyaGroups() {
   return sinhalaHodiyaSections.map(section => ({ ...section, sinhala: true }));
 }
@@ -65,6 +75,25 @@ export function getHodiyaPrintLayout(
     preferredRows,
     Math.floor((245 + spacing) / (printableTileSize + spacing))
   ));
+
+  return { tileSize: printableTileSize, rows, columns };
+}
+
+export function getHodiyaRepeatPrintLayout(
+  fontSize: number,
+  tileSize: number,
+  spacing: number,
+  longestLetter: number
+): { tileSize: number; rows: number; columns: number } {
+  const { tileSize: printableTileSize, columns } = getHodiyaPrintLayout(
+    fontSize,
+    tileSize,
+    spacing,
+    12,
+    30,
+    longestLetter
+  );
+  const rows = Math.max(1, Math.floor((277 + spacing) / (printableTileSize + spacing)));
 
   return { tileSize: printableTileSize, rows, columns };
 }

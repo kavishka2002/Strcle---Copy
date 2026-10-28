@@ -11,7 +11,6 @@ import { createStarterAsset, englishBookSubjectOptions, starterArtwork, starterT
 import { newDesignTemplateIds, newDesignTemplates } from "@/data/new-templates";
 import { customArtworkAssets, customArtworkTemplateIds, customArtworkTemplates } from "@/data/custom-art-templates";
 import { printableLabelCategories, printableLabelCategoryById, printableLabelTemplateIds, printableLabelTemplates, type PrintableLabelCategory } from "@/data/printable-label-templates";
-import { sinhalaAlphabetSections, type SinhalaAlphabetSectionId } from "@/data/sinhala-alphabet";
 import { CUSTOM_SIZE_ARTWORK_ID, CUSTOM_SIZE_TEMPLATE_ID, customSizeTemplate } from "@/data/custom-size-template";
 import { createDesign, createSubjectDesign, templateFromDesign } from "@/lib/design";
 import { db, getActiveTenantId, readRecentIds, writeRecentIds } from "@/lib/database";
@@ -202,9 +201,6 @@ export function StickerStudio() {
   const [gapY, setGapY] = useState(2.5);
   const [printOrientation, setPrintOrientation] = useState<"portrait" | "landscape">("portrait");
   const [printPage, setPrintPage] = useState(0);
-  const [sinhalaAlphabetPanelVisible, setSinhalaAlphabetPanelVisible] = useState(true);
-  const [sinhalaAlphabetSection, setSinhalaAlphabetSection] = useState<SinhalaAlphabetSectionId>("vowels");
-  const [sinhalaAlphabetDraft, setSinhalaAlphabetDraft] = useState<string[]>([]);
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const stickerTextInputRef = useRef<HTMLTextAreaElement>(null);
@@ -539,29 +535,6 @@ export function StickerStudio() {
       start: input.selectionStart,
       end: input.selectionEnd
     };
-  };
-  const insertSinhalaAlphabetDraft = (text: TextElement) => {
-    const insertion = sinhalaAlphabetDraft.join("");
-    if (!insertion) return;
-
-    const selection = stickerTextSelectionRef.current?.textId === text.id
-      ? stickerTextSelectionRef.current
-      : { start: text.text.length, end: text.text.length };
-    const start = Math.max(0, Math.min(selection.start, text.text.length));
-    const end = Math.max(start, Math.min(selection.end, text.text.length));
-    const nextText = `${text.text.slice(0, start)}${insertion}${text.text.slice(end)}`;
-    const caret = start + insertion.length;
-
-    transliterationDrafts.current[`sticker:${text.id}`] = { rawValue: nextText, displayedValue: nextText };
-    updateText(text.id, { text: nextText, visible: !!nextText.trim() });
-    stickerTextSelectionRef.current = { textId: text.id, start: caret, end: caret };
-    setSinhalaAlphabetDraft([]);
-    requestAnimationFrame(() => {
-      const input = stickerTextInputRef.current;
-      if (!input) return;
-      input.focus();
-      input.setSelectionRange(caret, caret);
-    });
   };
   const beginStickerTextInput = (text: TextElement, currentText = text.text) => {
     transliterationDrafts.current[`sticker:${text.id}`] = { rawValue: currentText, displayedValue: currentText };
@@ -1216,8 +1189,6 @@ export function StickerStudio() {
     const defaultPreviewSubject = design.texts.find(item => item.field === "subject")?.text ?? editorSubjects[0] ?? "";
     const activePreviewSubject = editorSubjects.includes(previewSubject) ? previewSubject : defaultPreviewSubject;
     const editorPreviewDesign = activePreviewSubject ? createPrintSticker(design, activePreviewSubject) : design;
-    const activeAlphabetSection = sinhalaAlphabetSections.find(section => section.id === sinhalaAlphabetSection) ?? sinhalaAlphabetSections[0];
-    const alphabetPreview = sinhalaAlphabetDraft.join("");
     return <div className="space-y-5">
       {generatedBatch.length > 1 && <section className="soft-card p-4"><div className="flex flex-wrap items-end justify-between gap-2"><div><b className="text-sm">All generated subject cards</b><p className="mt-1 text-xs text-slate-500">Preview every card here. Edit or print cards individually.</p></div><span className="text-xs text-slate-500">{generatedBatch.length} cards</span></div><div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">{generatedBatch.map(item => <article className="rounded-xl border border-[#eee9e2] bg-white p-3" key={item.id}><button className="block w-full text-left" onClick={() => void openDesign(item)}><div className="design-card-preview min-h-24"><StickerPreview design={item} assetUrls={assetUrls}/></div><b className="mt-2 block truncate text-xs">{item.texts.find(text => text.field === "subject")?.text || item.name}</b></button><div className="mt-2 flex gap-2"><button className="small-action flex-1" onClick={() => void openDesign(item)}>Edit card</button><button className="small-action flex-1" data-paid-feature onClick={() => { setDesign(item); setCopies(1); setPrintPage(0); changeSection("A4 print studio"); }}>Print this card</button></div></article>)}</div></section>}
       <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="flex flex-wrap gap-2"><button className="back-link" onClick={() => changeSection("Home")}><ArrowLeft size={14}/> Back to studio</button><button className="secondary-button !px-3 !py-2" onClick={() => void backToSubjectSelection()}><ArrowLeft size={14}/> Back to details / add subjects</button></div><h1 className="page-title mt-2">Make it yours <span className="text-base font-medium text-slate-400">· {design.name}</span></h1><p className="mt-1 text-xs text-slate-500">Tap a line to edit it. Drag text and decorations right on the sticker.</p>{editorSubjects.filter(Boolean).length > 1 && <p className="mt-2 rounded-lg bg-[#eff7f2] px-3 py-2 text-xs text-[#397b68]">This editor preview shows “{design.texts.find(item => item.field === "subject")?.text}”. The A4 print sheet includes all {editorSubjects.length} selected subjects, each on its own sticker.</p>}</div><div className="flex flex-wrap gap-2"><button className="secondary-button !px-3" onClick={() => void saveTemplate()}><LayoutGrid size={15}/> Save as template</button><button className="primary-button !px-4" onClick={() => void persistDesign(design, true)}><Save size={15}/> Save design</button></div></div>
@@ -1251,33 +1222,6 @@ export function StickerStudio() {
                 <label className="field-label block">Text input mode<select className="text-input mt-2" value={typingMode} onChange={event => { setTypingMode(event.target.value as TextInputMode); beginStickerTextInput(text); }}><option value="English">English</option><option value="Sinhala Keyboard">Sinhala Keyboard</option><option value="Singlish to Sinhala" disabled={transliterationStatus !== "ready"}>Singlish to Sinhala{transliterationStatus === "loading" ? " · loading" : transliterationStatus === "error" ? " · unavailable" : ""}</option></select></label>
                 <p className="mt-2 text-[10px] leading-5 text-slate-500">{typingMode === "Singlish to Sinhala" ? "Type Singlish to convert as you type. Existing Sinhala text stays as entered." : typingMode === "Sinhala Keyboard" ? "Type Sinhala with your device's Sinhala keyboard or input method." : "Type English, or paste Sinhala text directly."}</p>
                 <label className="field-label block">Displayed text<textarea ref={stickerTextInputRef} lang={containsSinhala(text.text) || typingMode !== "English" ? "si" : "en"} dir="auto" spellCheck={false} autoCapitalize="off" autoCorrect="off" className="text-input mt-2 min-h-16 resize-y" style={{ fontFamily: textFontStack(text.fontFamily, text.sinhalaFontFamily), fontWeight: resolvedFontWeight(text) }} value={text.text} onFocus={event => { beginStickerTextInput(text, event.currentTarget.value); rememberStickerTextSelection(text.id, event.currentTarget); }} onSelect={event => rememberStickerTextSelection(text.id, event.currentTarget)} onBlur={event => rememberStickerTextSelection(text.id, event.currentTarget)} onCompositionStart={() => composingStudentFields.current.add(`sticker:${text.id}`)} onCompositionEnd={event => { const key = `sticker:${text.id}`; composingStudentFields.current.delete(key); rememberStickerTextSelection(text.id, event.currentTarget); updateStickerTextInput(text, event.currentTarget.value, event.currentTarget.selectionStart); }} onChange={event => { rememberStickerTextSelection(text.id, event.target); updateStickerTextInput(text, event.target.value, event.target.selectionStart, composingStudentFields.current.has(`sticker:${text.id}`)); }}/></label>
-                <section className="rounded-xl border border-[#dce9e1] bg-[#f7fbf8] p-3" aria-label="Sinhala alphabet picker">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div><b className="text-sm">සිංහල හෝඩිය</b><p className="mt-1 text-[10px] text-slate-500">Choose letters to preview, then insert them into the selected text.</p></div>
-                    <button type="button" className="small-action" aria-expanded={sinhalaAlphabetPanelVisible} onClick={() => setSinhalaAlphabetPanelVisible(visible => !visible)}>{sinhalaAlphabetPanelVisible ? "Hide alphabet" : "Show alphabet"}</button>
-                  </div>
-                  {sinhalaAlphabetPanelVisible && <div className="mt-3 space-y-3">
-                    <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Sinhala alphabet sections">
-                      {sinhalaAlphabetSections.map(section => <button type="button" key={section.id} role="tab" aria-selected={sinhalaAlphabetSection === section.id} aria-controls="sinhala-alphabet-letters" className={`filter-chip !px-2.5 !py-1.5 ${sinhalaAlphabetSection === section.id ? "selected" : ""}`} onClick={() => setSinhalaAlphabetSection(section.id)}>{section.label}</button>)}
-                    </div>
-                    <div id="sinhala-alphabet-letters" role="tabpanel" className="rounded-lg border border-[#e7eee9] bg-white p-2">
-                      <p className="mb-2 text-[10px] text-slate-500">{activeAlphabetSection.description}</p>
-                      <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8" lang="si">
-                        {activeAlphabetSection.letters.map((letter, index) => <button type="button" key={`${activeAlphabetSection.id}-${index}`} className="grid min-h-10 place-items-center rounded-lg border border-[#e5ebe7] bg-[#fffdfa] px-1 text-lg text-[#2d6555] transition hover:border-[#397b68] hover:bg-[#eff7f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#397b68]" aria-label={`Add ${letter} to letter preview`} onMouseDown={event => event.preventDefault()} onClick={() => setSinhalaAlphabetDraft(current => [...current, letter])} style={{ fontFamily: textFontStack("Inter", text.sinhalaFontFamily) }}>{letter}</button>)}
-                      </div>
-                    </div>
-                    <div className="rounded-lg border border-[#e7eee9] bg-white p-3">
-                      <span className="field-label">Selected text preview</span>
-                      <div lang="si" dir="auto" aria-live="polite" className="mt-1 min-h-10 break-words rounded-md bg-[#f8faf8] px-3 py-2 text-xl text-[#26394a]" style={{ fontFamily: textFontStack("Inter", text.sinhalaFontFamily) }}>{alphabetPreview || <span className="text-sm text-slate-400">Your selected letters will appear here.</span>}</div>
-                      <div className="mt-2 flex flex-wrap justify-end gap-2">
-                        <button type="button" className="small-action" disabled={sinhalaAlphabetDraft.length === 0} onMouseDown={event => event.preventDefault()} onClick={() => setSinhalaAlphabetDraft(current => current.slice(0, -1))}>Backspace</button>
-                        <button type="button" className="small-action" disabled={sinhalaAlphabetDraft.length === 0} onMouseDown={event => event.preventDefault()} onClick={() => setSinhalaAlphabetDraft([])}>Clear all</button>
-                        <button type="button" className="primary-button !px-3 !py-2" disabled={!alphabetPreview} onMouseDown={event => event.preventDefault()} onClick={() => insertSinhalaAlphabetDraft(text)}>Insert into text</button>
-                      </div>
-                    </div>
-                  </div>}
-                  <p className="mt-2 text-[10px] leading-4 text-slate-500">The text box above remains available for your regular keyboard or Sinhala IME. The selected Sinhala font is bundled with the app and works offline.</p>
-                </section>
                 <div className="sticker-font-controls space-y-3 rounded-xl border border-[#eee9e2] bg-[#fffdfa] p-3">
                   <label className="field-label block">English font<select className="text-input mt-2" value={text.fontFamily} onChange={e => updateText(text.id, { fontFamily: e.target.value as EnglishFontFamily })}>{fontCategories.map(category => <optgroup key={category} label={category}>{englishFonts.filter(font => font.category === category).map(font => <option key={font.family} value={font.family}>{font.family}</option>)}</optgroup>)}</select></label>
                   <div className="rounded-lg bg-white p-2 text-sm" style={{ fontFamily: `"${text.fontFamily}", sans-serif` }}>{fontPreviewText.english}</div>

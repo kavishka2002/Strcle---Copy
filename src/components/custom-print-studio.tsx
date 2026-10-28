@@ -228,7 +228,6 @@ export function CustomPrintStudio({
   const [outlineColor, setOutlineColor] = useState("#397b68");
   const [outlineWidth, setOutlineWidth] = useState("0.5");
   const [borderStyle, setBorderStyle] = useState<CustomPrintItem["borderStyle"]>("solid");
-  const [fontFamily, setFontFamily] = useState<CustomPrintFont>("Inter");
   const [fontSize, setFontSize] = useState("24");
   const [bold, setBold] = useState(true);
   const [align, setAlign] = useState<CustomPrintItem["align"]>("center");
@@ -502,7 +501,7 @@ export function CustomPrintStudio({
     if (!Number.isFinite(outlineValue) || outlineValue < 0 || outlineValue > 5) throw new RangeError("Outline thickness must be between 0 and 5 mm.");
     return {
       widthMm, heightMm, copies: copiesValue, background, color: textColor, outlineColor,
-      outlineWidth: outlineValue, borderStyle, fontSize: fontSizeValue, fontFamily, bold, align, fit: pictureFit
+      outlineWidth: outlineValue, borderStyle, fontSize: fontSizeValue, fontFamily: "Inter", bold, align, fit: pictureFit
     } as const;
   };
 
@@ -764,7 +763,7 @@ export function CustomPrintStudio({
     outlineWidth: Number(outlineWidth) || 0,
     borderStyle,
     fontSize: Number(fontSize) || 24,
-    fontFamily,
+    fontFamily: "Inter",
     bold,
     align,
     artwork: activeTool === "mini-art" && !selectedAssetId ? selectedArtwork : undefined,
@@ -885,7 +884,6 @@ export function CustomPrintStudio({
               <label className="field-label">Outline colour<input className="text-input mt-2 h-10 p-1" type="color" value={outlineColor} onChange={e => setOutlineColor(e.target.value)}/></label>
               <label className="field-label">Outline width (mm)<input className="text-input mt-2" type="number" min="0" max="5" step="0.1" value={outlineWidth} onChange={e => setOutlineWidth(e.target.value)}/></label>
               <label className="field-label">Outline style<select className="text-input mt-2" value={borderStyle} onChange={e => setBorderStyle(e.target.value as CustomPrintItem["borderStyle"])}><option value="solid">Solid</option><option value="dashed">Dashed</option><option value="dotted">Dotted</option></select></label>
-              <label className="field-label">Font family<select className="text-input mt-2" value={fontFamily} onChange={e => setFontFamily(e.target.value as CustomPrintFont)}><optgroup label="English">{englishFonts.map(font => <option key={font.family} value={font.family}>{font.family}</option>)}</optgroup><optgroup label="Sinhala">{sinhalaFonts.map(font => <option key={font.family} value={font.family}>{font.family}</option>)}</optgroup></select></label>
               <label className="field-label">Font size (pt)<input className="text-input mt-2" type="number" min="4" max="160" value={fontSize} onChange={e => setFontSize(e.target.value)}/><input className="mt-2 w-full accent-[#397b68]" aria-label="Generator font size slider" type="range" min="4" max="160" value={Math.min(160, Math.max(4, Number(fontSize) || 24))} onChange={e => setFontSize(e.target.value)}/></label>
               <label className="field-label">Text alignment<select className="text-input mt-2" value={align} onChange={e => setAlign(e.target.value as CustomPrintItem["align"])}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
               <label className="col-span-2 flex items-center gap-2 text-xs"><input type="checkbox" checked={bold} onChange={e => setBold(e.target.checked)}/> Bold text</label>
