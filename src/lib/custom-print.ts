@@ -14,6 +14,7 @@ import type { EnglishFontFamily, SinhalaFontFamily } from "@/types";
 export type CustomPrintFont = EnglishFontFamily | SinhalaFontFamily;
 export type CustomPrintFit = "contain" | "cover" | "crop";
 export type NumberLabelStyle = "digits" | "english-words" | "sinhala-words";
+export type CustomPrintFontTargetMode = "all" | "selected" | "individual";
 
 export interface CustomPrintItem {
   id: string;
@@ -79,6 +80,23 @@ export function updateCustomPrintItems(
 ): CustomPrintItem[] {
   const selected = new Set(selectedIds);
   return items.map(item => selected.has(item.id) ? { ...item, ...patch } : item);
+}
+
+export function getCustomPrintFontTargetIds(
+  items: CustomPrintItem[],
+  mode: CustomPrintFontTargetMode,
+  selectedIds: string[],
+  activeItemId?: string
+): string[] {
+  const textItems = items.filter(item => item.text);
+  if (mode === "all") return textItems.map(item => item.id);
+  if (mode === "individual") {
+    return activeItemId && textItems.some(item => item.id === activeItemId) ? [activeItemId] : [];
+  }
+  const selected = new Set(selectedIds);
+  const targets = textItems.filter(item => selected.has(item.id));
+  if (targets.length) return targets.map(item => item.id);
+  return activeItemId && textItems.some(item => item.id === activeItemId) ? [activeItemId] : [];
 }
 
 const englishNumberWords = [

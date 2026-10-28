@@ -7,20 +7,25 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { AppToast } from "@/components/app-toast";
 import {
   a4NoticeTemplates, getNoticeCategory, getNoticeTemplate, getVisibleNoticeFields, noticeCategories,
-  noticePaperDimensionsMm, type NoticeTemplate
+  noticePaperDimensionsMm, noticePaperSizes, type NoticePaperSize, type NoticeTemplate
 } from "@/data/a4-notice-templates";
 import { getActiveTenantId } from "@/lib/database";
 import { loadSavedA4Notices, saveA4Notices, type SavedA4Notice } from "@/lib/a4-notice-storage";
-import { printCurrentPageWithDialog } from "@/lib/print-page";
+import { calculateNoticeFitScale } from "@/lib/a4-notice-layout";
+import { printCurrentPage } from "@/lib/print-page";
+import { englishFonts, sinhalaFonts } from "@/lib/font-catalog";
+import type { ImageAsset } from "@/types";
 
 type NoticeDraft = SavedA4Notice;
 type Alignment = NoticeDraft["align"];
 
 const timestamp = () => Date.now();
 
-function setA4NoticePrintMode(active: boolean): void {
+function setA4NoticePrintMode(active: boolean, paperSize?: NoticePaperSize): void {
   if (typeof document === "undefined") return;
   document.documentElement.classList.toggle("a4-notice-print-mode", active);
+  if (active && paperSize) document.documentElement.dataset.a4NoticePaperSize = paperSize.toLowerCase();
+  else delete document.documentElement.dataset.a4NoticePaperSize;
 }
 
 function makeDraft(template: NoticeTemplate): NoticeDraft {
@@ -36,18 +41,36 @@ function makeDraft(template: NoticeTemplate): NoticeDraft {
     bodyFontSize: 18,
     textColor: template.colors.ink,
     align: "center",
+    fontFamily: template.language === "en" ? "Inter" : "Noto Sans Sinhala",
+    paperSize: "A4",
     updatedAt: timestamp()
   };
+}
+
+function getPaperDimensions(draft: NoticeDraft) {
+  const size = draft.paperSize ?? "A4";
+  if (size === "custom") {
+    const width = draft.customWidthMm ?? noticePaperDimensionsMm[draft.orientation].width;
+    const height = draft.customHeightMm ?? noticePaperDimensionsMm[draft.orientation].height;
+    return draft.orientation === "landscape" ? { width: Math.max(width, height), height: Math.min(width, height) }
+      : { width: Math.min(width, height), height: Math.max(width, height) };
+  }
+  const dimensions = noticePaperSizes[size];
+  return draft.orientation === "landscape"
+    ? { width: dimensions.height, height: dimensions.width }
+    : dimensions;
 }
 
 function NoticePaper({
   template,
   draft,
-  print = false
+  print = false,
+  imageUrl
 }: {
   template: NoticeTemplate;
   draft: NoticeDraft;
   print?: boolean;
+  imageUrl?: string;
 }) {
   const category = getNoticeCategory(template.categoryId);
   const style = {
@@ -57,15 +80,34 @@ function NoticePaper({
     "--notice-soft": template.colors.soft,
     "--notice-heading-size": `${draft.headingFontSize * 0.3528}mm`,
     "--notice-body-size": `${draft.bodyFontSize * 0.3528}mm`,
-    "--notice-align": draft.align
+    "--notice-align": draft.align,
+    "--notice-font-family": `"${draft.fontFamily ?? "Noto Sans Sinhala"}", "Noto Sans Sinhala", "Inter", sans-serif`
   } as CSSProperties;
   const heading = draft.values.heading?.trim();
   const visibleFields = getVisibleNoticeFields(template.fields, draft.values, draft.hiddenFields);
   const hasContact = visibleFields.some(field => field.key.startsWith("contact"));
+  const paperDimensions = getPaperDimensions(draft);
+  const paperSize = draft.paperSize ?? "A4";
+  const fitScale = calculateNoticeFitScale({
+    pageWidthMm: paperDimensions.width,
+    pageHeightMm: paperDimensions.height,
+    orientation: draft.orientation,
+    heading: heading || (template.language === "en" ? category?.nameEn ?? "" : category?.nameSi ?? ""),
+    fields: visibleFields.map(field => ({
+      label: template.language === "en" ? field.labelEn : template.language === "si" ? field.labelSi : `${field.labelSi} / ${field.labelEn}`,
+      value: draft.values[field.key]?.trim() ?? "",
+      wide: field.key === "description" || field.key === "details" || field.key === "notice" || field.key.startsWith("contact")
+    })),
+    headingFontSizePt: draft.headingFontSize,
+    bodyFontSizePt: draft.bodyFontSize,
+    hasPhoto: !!imageUrl,
+    hasTranslation: template.language === "bi",
+    hasFooter: hasContact
+  });
 
   return <article
-    className={`a4-notice-paper a4-notice-${template.style} ${draft.orientation} ${print ? "a4-notice-print-page" : ""}`}
-    style={style}
+    className={`a4-notice-paper a4-notice-${template.style} ${draft.orientation} paper-${paperSize.toLowerCase()} ${print ? "a4-notice-print-page" : ""}`}
+    style={{ ...style, "--notice-page-width": `${paperDimensions.width}mm`, "--notice-page-height": `${paperDimensions.height}mm`, "--notice-fit-scale": fitScale, "--notice-photo-limit": draft.orientation === "landscape" ? "18%" : "24%", aspectRatio: `${paperDimensions.width} / ${paperDimensions.height}` } as CSSProperties}
     lang={template.language === "en" ? "en" : "si"}
     aria-label={`${category?.nameEn ?? "A4 notice"} ${draft.orientation} preview`}
   >
@@ -75,6 +117,7 @@ function NoticePaper({
         <h2>{heading || (template.language === "en" ? category?.nameEn : category?.nameSi)}</h2>
         {template.language === "bi" && <span className="a4-notice-translation">{category?.nameEn}</span>}
       </header>
+      {imageUrl && <img className="a4-notice-photo" src={imageUrl} alt="Advertisement photograph"/>}
       {visibleFields.length > 0 && <section className="a4-notice-fields" aria-label="Notice details">
         {visibleFields.map(field => {
           const value = draft.values[field.key]?.trim();
@@ -105,7 +148,15 @@ function TemplateThumbnail({ template }: { template: NoticeTemplate }) {
   </div>;
 }
 
-export function A4NoticeLibrary() {
+export function A4NoticeLibrary({
+  assets,
+  assetUrls,
+  onUpload
+}: {
+  assets: ImageAsset[];
+  assetUrls: Record<string, string>;
+  onUpload: (files: FileList | null) => Promise<string[]>;
+}) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [draft, setDraft] = useState<NoticeDraft | null>(null);
@@ -140,6 +191,15 @@ export function A4NoticeLibrary() {
   }, [categoryFilter, search]);
 
   const currentTemplate = draft ? getNoticeTemplate(draft.templateId) : undefined;
+  const selectedPhotoUrl = draft?.imageAssetId ? assetUrls[draft.imageAssetId] : undefined;
+  const selectedPhoto = draft?.imageAssetId ? assets.find(asset => asset.id === draft.imageAssetId) : undefined;
+  const updatePaperSize = (paperSize: NoticePaperSize) => updateDraft({
+    paperSize,
+    ...(paperSize === "custom" ? {
+      customWidthMm: draft?.customWidthMm ?? 210,
+      customHeightMm: draft?.customHeightMm ?? 297
+    } : {})
+  });
   const updateDraft = (patch: Partial<NoticeDraft>) => setDraft(previous =>
     previous ? { ...previous, ...patch, updatedAt: Date.now() } : previous
   );
@@ -192,14 +252,22 @@ export function A4NoticeLibrary() {
     if (!draft || !currentTemplate) return;
     try {
       const text = [draft.values.heading, ...currentTemplate.fields.map(field => draft.values[field.key])].filter(Boolean).join(" ");
-      await document.fonts.load(`700 ${draft.headingFontSize}pt "Noto Sans Sinhala"`, text);
-      await document.fonts.load(`400 ${draft.bodyFontSize}pt "Noto Sans Sinhala"`, text);
+      const fontFamily = draft.fontFamily ?? "Noto Sans Sinhala";
+      await document.fonts.load(`700 ${draft.headingFontSize}pt "${fontFamily}"`, text);
+      await document.fonts.load(`400 ${draft.bodyFontSize}pt "${fontFamily}"`, text);
       await document.fonts.ready;
-      setA4NoticePrintMode(true);
-      const result = await printCurrentPageWithDialog({ orientation: draft.orientation });
-      if (result.status === "printed") setMessage(`Print job sent to ${result.printerName}.`);
-      else if (result.status === "cancelled") setMessage("Printing was cancelled. Your notice has not changed.");
-      else setMessage("Print dialog opened. Select a printer or choose Save as PDF.");
+      if (draft.imageAssetId && !selectedPhotoUrl) throw new Error("The selected advertisement photo is not available. Choose it again before printing.");
+      const paperSize = draft.paperSize ?? "A4";
+      const customSize = paperSize === "custom" ? getPaperDimensions(draft) : undefined;
+      setA4NoticePrintMode(true, paperSize);
+      const result = await printCurrentPage({
+        orientation: draft.orientation,
+        paperSize: paperSize === "custom" ? undefined : paperSize,
+        customWidthMm: customSize?.width,
+        customHeightMm: customSize?.height
+      });
+      if (result.status === "previewed") setMessage("Print preview opened. Print or save the PDF from your PDF viewer.");
+      else setMessage("Print preview opened in your browser.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not prepare the A4 notice for printing.");
     } finally {
@@ -221,7 +289,7 @@ export function A4NoticeLibrary() {
       <button className={`filter-chip ${categoryFilter === "all" ? "selected" : ""}`} onClick={() => setCategoryFilter("all")}>All categories</button>
       {noticeCategories.map(category => <button key={category.id} className={`filter-chip ${categoryFilter === category.id ? "selected" : ""}`} onClick={() => setCategoryFilter(category.id)}>{category.nameEn} · {category.nameSi}</button>)}
     </div>
-    <p className="a4-notice-result-count">{visibleTemplates.length} designs · 3 designs per category</p>
+    <p className="a4-notice-result-count">{visibleTemplates.length} designs · {new Set(a4NoticeTemplates.map(template => template.style)).size} styles per category</p>
     {visibleTemplates.length ? <div className="a4-notice-template-grid">
       {visibleTemplates.map(template => {
         const category = getNoticeCategory(template.categoryId);
@@ -247,7 +315,7 @@ export function A4NoticeLibrary() {
       return <article className="a4-notice-saved-card" key={saved.id}>
         {template && <TemplateThumbnail template={template}/>}
         <b>{saved.name}</b>
-        <small>{new Date(saved.updatedAt).toLocaleDateString()} · A4 {saved.orientation}</small>
+        <small>{new Date(saved.updatedAt).toLocaleDateString()} · {saved.paperSize ?? "A4"} {saved.orientation}</small>
         <div className="flex gap-2"><button className="small-action flex-1" onClick={() => {
           if (!template) {
             setError("This saved notice refers to a template that is no longer available.");
@@ -266,6 +334,14 @@ export function A4NoticeLibrary() {
   const renderEditor = () => {
     if (!draft || !currentTemplate) return null;
     const category = getNoticeCategory(currentTemplate.categoryId);
+    const fontChoices = currentTemplate.language === "en"
+      ? englishFonts.map(font => ({ family: font.family, sample: "Aa Bb 123" }))
+      : currentTemplate.language === "si"
+        ? sinhalaFonts.map(font => ({ family: font.family, sample: "අ ආ ඇ ඉ" }))
+        : [
+          ...sinhalaFonts.map(font => ({ family: font.family, sample: "අ ආ ඇ ඉ" })),
+          ...englishFonts.map(font => ({ family: font.family, sample: "Aa Bb 123" }))
+        ];
     const setFieldValue = (key: string, value: string) =>
       updateDraft({ values: { ...draft.values, [key]: value } });
     const toggleField = (key: string, hidden: boolean) => updateDraft({
@@ -290,17 +366,46 @@ export function A4NoticeLibrary() {
           <p>Change any details or just enter the phone number. Empty fields will not print.</p>
           <label className="field-label">Saved design name<input className="text-input mt-2" value={draft.name} onChange={event => updateDraft({ name: event.target.value })}/></label>
           <label className="field-label mt-4">Main heading / ප්‍රධාන ශීර්ෂය<textarea className="text-input mt-2 min-h-20" value={draft.values.heading ?? ""} onChange={event => setFieldValue("heading", event.target.value)} dir="auto"/></label>
+          <section className="a4-notice-photo-control">
+            <div><b>Add a photograph</b><p>Optional · JPG, PNG, or WebP up to 12 MB.</p></div>
+            <label className="secondary-button cursor-pointer justify-center"><FileText size={14}/>{draft.imageAssetId ? "Replace photo" : "Choose photo"}
+              <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={event => {
+                const files = event.currentTarget.files;
+                void onUpload(files).then(ids => {
+                  if (ids.length) {
+                    updateDraft({ imageAssetId: ids[0] });
+                    setMessage("Advertisement photo added.");
+                  }
+                }).catch(cause => setError(cause instanceof Error ? cause.message : "Could not add the advertisement photo."));
+                event.currentTarget.value = "";
+              }}/>
+            </label>
+            {draft.imageAssetId && <div className="a4-notice-photo-preview">
+              {selectedPhotoUrl ? <img src={selectedPhotoUrl} alt={selectedPhoto?.name ?? "Selected advertisement photo"}/> : <span>Photo unavailable</span>}
+              <button type="button" className="small-action danger" onClick={() => updateDraft({ imageAssetId: undefined })}>Remove photo</button>
+            </div>}
+          </section>
           <div className="a4-notice-edit-fields">{currentTemplate.fields.map(field => <div className="a4-notice-input-row" key={field.key}>
             <label className="field-label" htmlFor={`notice-${field.key}`}>{field.labelEn} / {field.labelSi}</label>
             <label className="a4-notice-visible"><input type="checkbox" checked={!draft.hiddenFields.includes(field.key)} onChange={event => toggleField(field.key, !event.target.checked)}/> Show</label>
             <textarea id={`notice-${field.key}`} className="text-input min-h-16" placeholder={`${field.placeholderEn} · ${field.placeholderSi}`} value={draft.values[field.key] ?? ""} onChange={event => setFieldValue(field.key, event.target.value)} dir="auto"/>
           </div>)}</div>
           <div className="a4-notice-setting-grid">
-            <label className="field-label">Paper orientation
-              <select className="text-input mt-2" value={draft.orientation} onChange={event => updateDraft({ orientation: event.target.value as NoticeDraft["orientation"] })}>
-                <option value="portrait">A4 Portrait · 210 × 297 mm</option><option value="landscape">A4 Landscape · 297 × 210 mm</option>
+            <label className="field-label">Paper size
+              <select className="text-input mt-2" value={draft.paperSize ?? "A4"} onChange={event => updatePaperSize(event.target.value as NoticePaperSize)}>
+                <option value="A4">A4 · 210 × 297 mm</option><option value="A5">A5 · 148 × 210 mm</option>
+                <option value="A6">A6 · 105 × 148 mm</option><option value="custom">Custom size</option>
               </select>
             </label>
+            <label className="field-label">Orientation
+              <select className="text-input mt-2" value={draft.orientation} onChange={event => updateDraft({ orientation: event.target.value as NoticeDraft["orientation"] })}>
+                <option value="portrait">Portrait</option><option value="landscape">Landscape</option>
+              </select>
+            </label>
+            {(draft.paperSize ?? "A4") === "custom" && <>
+              <label className="field-label">Page width (mm)<input className="text-input mt-2" type="number" min="50" max="420" step="1" value={draft.customWidthMm ?? 210} onChange={event => updateDraft({ customWidthMm: Number(event.target.value) })}/></label>
+              <label className="field-label">Page height (mm)<input className="text-input mt-2" type="number" min="50" max="594" step="1" value={draft.customHeightMm ?? 297} onChange={event => updateDraft({ customHeightMm: Number(event.target.value) })}/></label>
+            </>}
             <label className="field-label">Text alignment
               <select className="text-input mt-2" value={draft.align} onChange={event => updateDraft({ align: event.target.value as Alignment })}>
                 <option value="left">Left</option><option value="center">Center</option><option value="right">Right</option>
@@ -310,11 +415,21 @@ export function A4NoticeLibrary() {
             <label className="field-label">Details size · {draft.bodyFontSize} pt<input type="range" min="12" max="32" value={draft.bodyFontSize} onChange={event => updateDraft({ bodyFontSize: Number(event.target.value) })}/></label>
             <label className="field-label a4-notice-color">Text color<input type="color" value={draft.textColor} onChange={event => updateDraft({ textColor: event.target.value })}/></label>
           </div>
+          <details className="a4-notice-font-settings">
+            <summary>Change font · preview styles</summary>
+            <div className="a4-notice-font-grid">{fontChoices.map(font => <button
+              type="button"
+              key={font.family}
+              className={draft.fontFamily === font.family ? "selected" : ""}
+              aria-pressed={draft.fontFamily === font.family}
+              onClick={() => updateDraft({ fontFamily: font.family })}
+            ><span style={{ fontFamily: `"${font.family}", "Noto Sans Sinhala", sans-serif` }}>{font.sample}</span><small>{font.family}</small></button>)}</div>
+          </details>
         </section>
         <section className="a4-notice-preview-column">
-          <div className="a4-notice-preview-header"><div><b>A4 preview</b><span>{noticePaperDimensionsMm[draft.orientation].width} × {noticePaperDimensionsMm[draft.orientation].height} mm · {draft.orientation}</span></div><button className="primary-button" data-paid-feature onClick={() => void printNotice()}><Printer size={15}/> Print / Save as PDF</button></div>
-          <div className={`a4-notice-preview-stage ${draft.orientation}`}><NoticePaper template={currentTemplate} draft={draft}/></div>
-          <p className="a4-notice-print-note"><FileText size={14}/> The normal printer dialog lets you choose a printer or Save as PDF. Check paper size and scale in the dialog before printing.</p>
+          <div className="a4-notice-preview-header"><div><b>{draft.paperSize ?? "A4"} preview</b><span>{getPaperDimensions(draft).width} × {getPaperDimensions(draft).height} mm · {draft.orientation}</span></div><button className="primary-button" data-paid-feature onClick={() => void printNotice()}><Printer size={15}/> Preview / Print / Save as PDF</button></div>
+          <div className={`a4-notice-preview-stage ${draft.orientation}`}><NoticePaper template={currentTemplate} draft={draft} imageUrl={selectedPhotoUrl}/></div>
+          <p className="a4-notice-print-note"><FileText size={14}/> Choose a matching paper size and 100% / Actual Size in the printer dialog. For custom pages, set the same dimensions in your printer settings.</p>
         </section>
       </div>
     </div>;
@@ -326,6 +441,6 @@ export function A4NoticeLibrary() {
       {error && <AppToast key={`notice-error-${error}`} variant="error" message={error} onClose={() => setError("")}/>}
       {draft ? renderEditor() : showSaved ? renderSaved() : renderLibrary()}
     </div>
-    {draft && currentTemplate && <div className="a4-notice-print-host"><NoticePaper template={currentTemplate} draft={draft} print/></div>}
+    {draft && currentTemplate && <div className="a4-notice-print-host"><NoticePaper template={currentTemplate} draft={draft} print imageUrl={selectedPhotoUrl}/></div>}
   </div>;
 }

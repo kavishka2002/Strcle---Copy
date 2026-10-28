@@ -1,6 +1,6 @@
 export type NoticeOrientation = "portrait" | "landscape";
 export type NoticeLanguage = "si" | "en" | "bi";
-export type NoticeVisualStyle = "bold" | "property" | "minimal";
+export type NoticeVisualStyle = "bold" | "property" | "minimal" | "floral" | "modern" | "elegant" | "traditional";
 
 export interface NoticeFieldDefinition {
   key: string;
@@ -29,6 +29,13 @@ export interface NoticeTemplate {
   fields: NoticeFieldDefinition[];
   defaults: Record<string, string>;
 }
+
+export type NoticePaperSize = "A4" | "A5" | "A6" | "custom";
+export const noticePaperSizes: Record<Exclude<NoticePaperSize, "custom">, { width: number; height: number }> = {
+  A4: { width: 210, height: 297 },
+  A5: { width: 148, height: 210 },
+  A6: { width: 105, height: 148 }
+};
 
 export const noticePaperDimensionsMm = {
   portrait: { width: 210, height: 297 },
@@ -163,6 +170,56 @@ export const noticeCategories: NoticeCategory[] = [
       field("extra", "Additional information", "අමතර තොරතුරු", "Optional extra details", "අමතර විස්තර", true),
       field("contact", "Telephone number", "දුරකථන අංකය", "Optional contact number", "දුරකථන අංකය", true)
     ]
+  },
+  {
+    id: "shop-opening", nameEn: "Shop Opening & Business", nameSi: "නව ව්‍යාපාර විවෘත කිරීම",
+    fields: [
+      field("business", "Business name", "ව්‍යාපාරයේ නම", "Enter the shop or business name", "වෙළඳසැලේ හෝ ව්‍යාපාරයේ නම"),
+      field("location", "Location", "ස්ථානය", "Address or nearby landmark", "ලිපිනය හෝ ළඟම ඇති ස්ථානය"),
+      field("date", "Opening date / offer", "විවෘත කරන දිනය / දීමනාව", "Date, hours, or launch offer", "දිනය, වේලාව හෝ විශේෂ දීමනාව", true),
+      field("description", "Details", "විස්තර", "Products or services available", "ලබාගත හැකි භාණ්ඩ හෝ සේවා", true),
+      field("contact", "Telephone number", "දුරකථන අංකය", "Add a contact number", "දුරකථන අංකය", true)
+    ]
+  },
+  {
+    id: "special-offers", nameEn: "Special Offers & Promotions", nameSi: "විශේෂ දීමනා",
+    fields: [
+      field("offer", "Offer", "දීමනාව", "What is the special offer?", "විශේෂ දීමනාව කුමක්ද?"),
+      field("business", "Shop / business", "වෙළඳසැල / ව්‍යාපාරය", "Business name", "ව්‍යාපාරයේ නම", true),
+      field("date", "Offer period", "දීමනාව වලංගු කාලය", "Optional date or period", "දිනය හෝ කාලය", true),
+      field("description", "Details", "විස්තර", "Add terms or product details", "කොන්දේසි හෝ භාණ්ඩ විස්තර", true),
+      field("contact", "Telephone number", "දුරකථන අංකය", "Optional contact number", "දුරකථන අංකය", true)
+    ]
+  },
+  {
+    id: "services-available", nameEn: "Services Available", nameSi: "සේවා ලබාගත හැක",
+    fields: [
+      field("service", "Service", "සේවාව", "What service do you provide?", "ඔබ ලබාදෙන සේවාව"),
+      field("provider", "Provider / business", "සේවා සපයන්නා / ව්‍යාපාරය", "Name of the service provider", "සේවා සපයන්නාගේ නම", true),
+      field("location", "Service area", "සේවා ප්‍රදේශය", "Town or areas covered", "නගරය හෝ සේවා ප්‍රදේශ", true),
+      field("description", "Details", "විස්තර", "Add useful service details", "සේවා විස්තර එක් කරන්න", true),
+      field("contact", "Telephone number", "දුරකථන අංකය", "Add a contact number", "දුරකථන අංකය")
+    ]
+  },
+  {
+    id: "community-events", nameEn: "Community Events", nameSi: "ප්‍රජා වැඩසටහන්",
+    fields: [
+      field("event", "Event", "වැඩසටහන", "Event name or purpose", "වැඩසටහනේ නම හෝ අරමුණ"),
+      field("date", "Date and time", "දිනය සහ වේලාව", "When will it take place?", "පැවැත්වෙන දිනය සහ වේලාව"),
+      field("location", "Venue", "ස්ථානය", "Where will it take place?", "පැවැත්වෙන ස්ථානය"),
+      field("description", "Details", "විස්තර", "Add an invitation or useful details", "ආරාධනාව හෝ වැදගත් විස්තර", true),
+      field("contact", "Contact", "විමසීම්", "Optional contact information", "විමසීම් සඳහා", true)
+    ]
+  },
+  {
+    id: "vehicle-for-sale", nameEn: "Vehicles for Sale", nameSi: "වාහන විකිණීමට ඇත",
+    fields: [
+      field("vehicle", "Vehicle", "වාහනය", "Make, model, and year", "වර්ගය, මාදිලිය සහ වර්ෂය"),
+      field("location", "Location", "ස්ථානය", "Town or viewing location", "නගරය හෝ වාහනය නැරඹිය හැකි ස්ථානය", true),
+      field("price", "Price", "මිල", "Optional asking price", "විකිණුම් මිල", true),
+      field("description", "Details", "විස්තර", "Mileage or other details", "ධාවනය හෝ වෙනත් විස්තර", true),
+      field("contact", "Telephone number", "දුරකථන අංකය", "Add a contact number", "දුරකථන අංකය")
+    ]
   }
 ];
 
@@ -175,7 +232,11 @@ const templateLooks: Array<{
 }> = [
   { style: "bold", name: "Bold Public Notice", language: "si", orientation: "portrait", colors: { accent: "#b42318", ink: "#201b1a", paper: "#ffffff", soft: "#fff1ee" } },
   { style: "property", name: "Professional Colour", language: "bi", orientation: "portrait", colors: { accent: "#145b76", ink: "#172d3a", paper: "#ffffff", soft: "#eaf4f6" } },
-  { style: "minimal", name: "Minimal Ink Saver", language: "en", orientation: "landscape", colors: { accent: "#202020", ink: "#171717", paper: "#ffffff", soft: "#f4f4f4" } }
+  { style: "minimal", name: "Minimal Ink Saver", language: "en", orientation: "landscape", colors: { accent: "#202020", ink: "#171717", paper: "#ffffff", soft: "#f4f4f4" } },
+  { style: "floral", name: "Fresh Garden", language: "bi", orientation: "portrait", colors: { accent: "#3d8061", ink: "#253b32", paper: "#ffffff", soft: "#edf7ef" } },
+  { style: "modern", name: "Modern Blocks", language: "en", orientation: "landscape", colors: { accent: "#6953a1", ink: "#2b2640", paper: "#ffffff", soft: "#f0edfa" } },
+  { style: "elegant", name: "Elegant Frame", language: "si", orientation: "portrait", colors: { accent: "#9b7134", ink: "#3b3022", paper: "#ffffff", soft: "#faf4e8" } },
+  { style: "traditional", name: "Classic Sri Lankan", language: "bi", orientation: "portrait", colors: { accent: "#a64f35", ink: "#382b24", paper: "#ffffff", soft: "#f8eee5" } }
 ];
 
 export const a4NoticeTemplates: NoticeTemplate[] = noticeCategories.flatMap(category =>

@@ -7,6 +7,13 @@ export type PrintDialogResult =
   | { status: "cancelled" }
   | { status: "printed"; printerName: string };
 
+export interface PrintPageOptions {
+  orientation?: "portrait" | "landscape";
+  paperSize?: "A4" | "A5" | "A6";
+  customWidthMm?: number;
+  customHeightMm?: number;
+}
+
 async function waitForPageToRender(): Promise<void> {
   if (typeof document === "undefined") return;
 
@@ -40,7 +47,7 @@ async function waitForPageToRender(): Promise<void> {
   await new Promise<void>(resolve => setTimeout(resolve, 200));
 }
 
-export async function printCurrentPage(options?: { orientation?: "portrait" | "landscape" }): Promise<PrintPageResult> {
+export async function printCurrentPage(options?: PrintPageOptions): Promise<PrintPageResult> {
   if (window.littlePaperDesktop?.isDesktop) {
     if (typeof window.littlePaperDesktop.printCurrentPage !== "function") {
       throw new Error("This desktop app needs the latest print update. Reinstall LittlePaper to print.");
@@ -52,7 +59,7 @@ export async function printCurrentPage(options?: { orientation?: "portrait" | "l
   return { status: "browser" };
 }
 
-export async function printCurrentPageWithDialog(options?: { orientation?: "portrait" | "landscape" }): Promise<PrintDialogResult> {
+export async function printCurrentPageWithDialog(options?: PrintPageOptions): Promise<PrintDialogResult> {
   if (window.littlePaperDesktop?.isDesktop) {
     if (typeof window.littlePaperDesktop.printWithDialog !== "function") {
       throw new Error("This desktop app needs the latest print update. Reinstall LittlePaper to print.");

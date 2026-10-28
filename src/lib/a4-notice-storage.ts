@@ -9,6 +9,11 @@ export interface SavedA4Notice {
   bodyFontSize: number;
   textColor: string;
   align: "left" | "center" | "right";
+  fontFamily?: string;
+  paperSize?: "A4" | "A5" | "A6" | "custom";
+  customWidthMm?: number;
+  customHeightMm?: number;
+  imageAssetId?: string;
   updatedAt: number;
 }
 
@@ -37,6 +42,11 @@ export function loadSavedA4Notices(storage: Pick<Storage, "getItem">, tenantId: 
       typeof item.headingFontSize !== "number" || typeof item.bodyFontSize !== "number" ||
       typeof item.textColor !== "string" ||
       (item.align !== "left" && item.align !== "center" && item.align !== "right") ||
+      (item.fontFamily !== undefined && typeof item.fontFamily !== "string") ||
+      (item.paperSize !== undefined && !["A4", "A5", "A6", "custom"].includes(item.paperSize)) ||
+      (item.customWidthMm !== undefined && (typeof item.customWidthMm !== "number" || !Number.isFinite(item.customWidthMm) || item.customWidthMm < 50 || item.customWidthMm > 420)) ||
+      (item.customHeightMm !== undefined && (typeof item.customHeightMm !== "number" || !Number.isFinite(item.customHeightMm) || item.customHeightMm < 50 || item.customHeightMm > 594)) ||
+      (item.imageAssetId !== undefined && typeof item.imageAssetId !== "string") ||
       typeof item.updatedAt !== "number" ||
       !Object.values(item.values).every(text => typeof text === "string")
     ) {

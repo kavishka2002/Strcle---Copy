@@ -2,6 +2,8 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { starterArtwork, starterTemplates } from "./templates";
+import { createSubjectDesign } from "../lib/design";
+import { calculateSheetLayout } from "../lib/layout";
 
 describe("illustration-based starter templates", () => {
   it("uses a real bundled PNG for every artwork template", () => {
@@ -27,15 +29,30 @@ describe("illustration-based starter templates", () => {
     }
   });
 
-  it("keeps a PNG-based notebook cover option available", () => {
+  it("provides full-page notebook cover designs sized for one A4 cover per page", () => {
     const cover = starterTemplates.find(template => template.id === "cover-rose-garden");
+    const covers = starterTemplates.filter(template => template.kind === "cover");
 
     expect(cover).toMatchObject({
       kind: "cover",
-      widthMm: 100,
-      heightMm: 60,
+      widthMm: 202,
+      heightMm: 289,
       images: [{ assetId: "starter-rose" }]
     });
+    expect(covers).toHaveLength(6);
+    expect(new Set(covers.map(template => template.decoration)).size).toBe(6);
+    expect(covers.every(template => template.texts?.some(text => text.customLabel === "Book title"))).toBe(true);
+
+    const design = createSubjectDesign(
+      "Kavindu Perera",
+      { name: "Kavindu Perera", grade: "Grade 8", school: "Example School" },
+      ["Mathematics", "Science", "English", "Sinhala", "History", "ICT"],
+      cover!,
+      "English"
+    );
+    const layout = calculateSheetLayout(design.widthMm, design.heightMm, 6);
+    expect(design.printSubjects).toHaveLength(6);
+    expect(layout).toMatchObject({ columns: 1, rows: 1, perPage: 1, pages: 6 });
   });
 
   it("does not expose the superseded built-in template collection", () => {

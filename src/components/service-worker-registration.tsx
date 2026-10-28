@@ -20,8 +20,8 @@ declare global {
   interface Window {
     littlePaperDesktop?: Readonly<{
       isDesktop: true;
-      printCurrentPage?: (options?: { orientation?: "portrait" | "landscape" }) => Promise<{ status: "previewed" }>;
-      printWithDialog?: (options?: { orientation?: "portrait" | "landscape" }) => Promise<{ status: "printed"; printerName: string } | { status: "cancelled" }>;
+      printCurrentPage?: (options?: { orientation?: "portrait" | "landscape"; paperSize?: "A4" | "A5" | "A6"; customWidthMm?: number; customHeightMm?: number }) => Promise<{ status: "previewed" }>;
+      printWithDialog?: (options?: { orientation?: "portrait" | "landscape"; paperSize?: "A4" | "A5" | "A6"; customWidthMm?: number; customHeightMm?: number }) => Promise<{ status: "printed"; printerName: string } | { status: "cancelled" }>;
       printResource?: (url: string) => Promise<{ status: "previewed" }>;
       printPdfData?: (pdfData: Uint8Array) => Promise<{ status: "previewed" }>;
       getUpdateInfo?: () => Promise<DesktopUpdateStatus>;

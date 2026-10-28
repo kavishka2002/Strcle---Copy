@@ -389,37 +389,58 @@ if (!app.requestSingleInstanceLock()) {
     return { status: "previewed" };
   }
 
-  async function createPrintPreview(webContents, orientation = "portrait") {
+  function getPrintPageOptions(options = {}) {
+    if (!options || typeof options !== "object" || Array.isArray(options)) {
+      throw new TypeError("Print options must be an object.");
+    }
+    const orientation = options.orientation ?? "portrait";
+    if (orientation !== "portrait" && orientation !== "landscape") {
+      throw new TypeError("Print orientation must be portrait or landscape.");
+    }
+    if (options.paperSize !== undefined && !["A4", "A5", "A6"].includes(options.paperSize)) {
+      throw new TypeError("Print paper size must be A4, A5, or A6.");
+    }
+    const customWidth = options.customWidthMm;
+    const customHeight = options.customHeightMm;
+    if (customWidth !== undefined || customHeight !== undefined) {
+      if (![customWidth, customHeight].every(Number.isFinite) || customWidth < 50 || customWidth > 420 || customHeight < 50 || customHeight > 594) {
+        throw new RangeError("Custom print dimensions must be between 50 and 420 mm wide and 50 and 594 mm high.");
+      }
+      return {
+        pageSize: { width: Math.round(customWidth * 1000), height: Math.round(customHeight * 1000) },
+        landscape: false,
+        preferCSSPageSize: false
+      };
+    }
+    return { pageSize: options.paperSize ?? "A4", landscape: orientation === "landscape", preferCSSPageSize: true };
+  }
+
+  async function createPrintPreview(webContents, options = {}) {
+    const printOptions = getPrintPageOptions(options);
     const pdf = await webContents.printToPDF({
-      pageSize: "A4",
+      pageSize: printOptions.pageSize,
       printBackground: true,
-      landscape: orientation === "landscape",
+      landscape: printOptions.landscape,
       margins: { top: 0, bottom: 0, left: 0, right: 0 },
-      preferCSSPageSize: true
+      preferCSSPageSize: printOptions.preferCSSPageSize
     });
     return openPdfPreview(Buffer.from(pdf));
   }
 
   ipcMain.handle("print-current-page", async (event, options) => {
     assertMainWindowSender(event);
-    const orientation = options?.orientation ?? "portrait";
-    if (orientation !== "portrait" && orientation !== "landscape") {
-      throw new TypeError("Print orientation must be portrait or landscape.");
-    }
-    return createPrintPreview(mainWindow.webContents, orientation);
+    return createPrintPreview(mainWindow.webContents, options);
   });
 
   ipcMain.handle("print-with-dialog", (event, options) => {
     assertMainWindowSender(event);
-    const orientation = options?.orientation ?? "portrait";
-    if (orientation !== "portrait" && orientation !== "landscape") {
-      throw new TypeError("Print orientation must be portrait or landscape.");
-    }
+    const printOptions = getPrintPageOptions(options);
     return new Promise((resolve, reject) => {
       mainWindow.webContents.print({
         silent: false,
         printBackground: true,
-        landscape: orientation === "landscape"
+        landscape: printOptions.landscape,
+        pageSize: printOptions.pageSize
       }, (success, failureReason) => {
         if (success) {
           resolve({ status: "printed", printerName: "selected printer" });

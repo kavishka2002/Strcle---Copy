@@ -4,18 +4,19 @@ import {
 } from "./a4-notice-templates";
 
 describe("A4 notice template library", () => {
-  it("includes each requested category with three visibly different ready-to-use designs", () => {
-    expect(noticeCategories).toHaveLength(12);
-    expect(a4NoticeTemplates).toHaveLength(36);
+  it("includes business, property, education, and community categories with varied template styles", () => {
+    expect(noticeCategories).toHaveLength(17);
+    expect(a4NoticeTemplates).toHaveLength(119);
     expect(noticeCategories.map(category => category.id)).toEqual([
       "land-for-sale", "house-for-sale", "house-room-rent", "property-wanted", "shop-for-rent",
       "general-sale", "second-hand-sale", "jobs-available", "employees-wanted", "tuition-classes",
-      "lost-found", "general-notice"
+      "lost-found", "general-notice", "shop-opening", "special-offers", "services-available",
+      "community-events", "vehicle-for-sale"
     ]);
     for (const category of noticeCategories) {
       const templates = a4NoticeTemplates.filter(template => template.categoryId === category.id);
-      expect(templates).toHaveLength(3);
-      expect(new Set(templates.map(template => template.style)).size).toBe(3);
+      expect(templates).toHaveLength(7);
+      expect(new Set(templates.map(template => template.style)).size).toBe(7);
       expect(templates.some(template => template.orientation === "portrait")).toBe(true);
       expect(templates.some(template => template.orientation === "landscape")).toBe(true);
       expect(new Set(templates.map(template => template.language))).toEqual(new Set(["si", "bi", "en"]));
@@ -29,6 +30,8 @@ describe("A4 notice template library", () => {
     const rent = noticeCategories.find(category => category.id === "house-room-rent");
     const sale = noticeCategories.find(category => category.id === "general-sale");
     const notice = noticeCategories.find(category => category.id === "general-notice");
+    const offers = noticeCategories.find(category => category.id === "special-offers");
+    const events = noticeCategories.find(category => category.id === "community-events");
 
     expect(land?.fields.map(field => field.key)).toEqual(["location", "size", "price", "description", "contact", "contact2"]);
     expect(land?.fields.find(field => field.key === "price")?.optional).toBe(true);
@@ -36,6 +39,8 @@ describe("A4 notice template library", () => {
     expect(rent?.fields.some(field => field.key === "conditions")).toBe(true);
     expect(sale?.fields.some(field => field.key === "item")).toBe(true);
     expect(notice?.fields.some(field => field.key === "notice")).toBe(true);
+    expect(offers?.fields.some(field => field.key === "offer")).toBe(true);
+    expect(events?.fields.some(field => field.key === "date")).toBe(true);
     expect(land?.nameSi).toBe("ඉඩම් විකිණීමට ඇත");
   });
 

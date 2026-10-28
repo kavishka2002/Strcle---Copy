@@ -183,7 +183,10 @@ export function StickerStudio() {
   const [typingMode, setTypingMode] = useState<TextInputMode>("English");
   const [transliterationStatus, setTransliterationStatus] = useState<"loading" | "ready" | "error">("loading");
   const [transliterationError, setTransliterationError] = useState("");
-  const [student, setStudent] = useState({ name: "", grade: "", school: "", customSubject: "", stream: "", englishName: "", englishSchool: "" });
+  const [student, setStudent] = useState({
+    name: "", grade: "", school: "", customSubject: "", stream: "", englishName: "", englishSchool: "",
+    bookTitle: "", teacher: "", schoolYear: "", indexNumber: ""
+  });
   const [subjectsSelected, setSubjectsSelected] = useState<string[]>([]);
   const [customSubjects, setCustomSubjects] = useState<string[]>([]);
   const [subjectSearch, setSubjectSearch] = useState("");
@@ -665,6 +668,10 @@ export function StickerStudio() {
       name: design.defaultCardName ?? textFor("name"),
       grade: design.defaultCardGrade ?? textFor("grade"),
       school: design.defaultCardSchool ?? textFor("school"),
+      bookTitle: design.texts.find(text => text.field === "custom" && text.customLabel === "Book title")?.text ?? "",
+      teacher: design.texts.find(text => text.field === "custom" && text.customLabel === "Teacher")?.text ?? "",
+      schoolYear: design.texts.find(text => text.field === "custom" && text.customLabel === "Year")?.text ?? "",
+      indexNumber: design.texts.find(text => text.field === "custom" && text.customLabel === "Index number")?.text ?? "",
       englishName: design.englishCardName ?? previous.englishName,
       englishSchool: design.englishCardSchool ?? previous.englishSchool,
       stream: restoredStream,
@@ -735,6 +742,17 @@ export function StickerStudio() {
     }, subjectLabels, selectedTemplate, language, englishSelected
       ? { name: englishCardName, grade: englishCardGrade, school: englishCardSchool }
       : undefined);
+    if (kind === "cover") {
+      const coverDetails: Record<string, string> = {
+        "Book title": student.bookTitle,
+        Teacher: student.teacher,
+        Year: student.schoolYear,
+        "Index number": student.indexNumber
+      };
+      nextDesign.texts = nextDesign.texts.map(text => text.field === "custom" && text.customLabel && coverDetails[text.customLabel] !== undefined
+        ? { ...text, text: coverDetails[text.customLabel].trim(), visible: Boolean(coverDetails[text.customLabel].trim()) }
+        : text);
+    }
     if (selectedTemplate.id === CUSTOM_SIZE_TEMPLATE_ID) nextDesign.customDimensionUnit = customUnit;
     if (nextDesign.customDimensionUnit) {
       setDesignWidthInput(formatMeasurement(nextDesign.widthMm, nextDesign.customDimensionUnit));
@@ -845,17 +863,21 @@ export function StickerStudio() {
   };
   const toggleFavourite = (item: StickerDesign) => void persistDesign({ ...item, favourite: !item.favourite });
 
-  const onUpload = async (files: FileList | null) => {
-    if (!files) return;
+  const onUpload = async (files: FileList | null): Promise<string[]> => {
+    if (!files) return [];
     const allowed = ["image/png", "image/jpeg", "image/webp"];
+    const uploadedIds: string[] = [];
     for (const file of Array.from(files)) {
       if (!allowed.includes(file.type)) { setError(`${file.name}: use a PNG, JPG, JPEG, or WebP image.`); continue; }
       if (file.size > 12 * 1024 * 1024) { setError(`${file.name}: image must be 12 MB or smaller.`); continue; }
       try {
-        await db.putAsset({ id: uid(), name: file.name, category: "Custom", type: file.type, blob: file, createdAt: Date.now() });
+        const id = uid();
+        await db.putAsset({ id, name: file.name, category: "Custom", type: file.type, blob: file, createdAt: Date.now() });
+        uploadedIds.push(id);
       } catch (e) { setError(e instanceof Error ? e.message : "Could not store this image."); }
     }
     await refresh();
+    return uploadedIds;
   };
   const addImage = (asset: ImageAsset, preset = "bottom-right") => {
     if (!design) { setError("Open a design before adding an illustration."); return; }
@@ -1015,7 +1037,7 @@ export function StickerStudio() {
     if (section === "Create sticker" || section === "Templates") return Creation();
     if (section === "PNG assets") return AssetLibrary();
     if (section === "A4 print studio") return design ? PrintStudio() : EmptyPanel({ title: "Open a design to start printing", text: "Create or open a saved sticker first, then choose A4 Print Studio.", action: () => changeSection("Create sticker") });
-    if (section === "A4 Notice & Advertisement Templates") return <A4NoticeLibrary/>;
+    if (section === "A4 Notice & Advertisement Templates") return <A4NoticeLibrary assets={assets} assetUrls={assetUrls} onUpload={onUpload}/>;
     if (section === "Sinhala Hodiya") return <SinhalaHodiya/>;
     if (section === "Custom Print Studio") return <CustomPrintStudio assets={assets} assetUrls={assetUrls} onUpload={onUpload}/>;
     if (section === "Past Paper Finder") return isTrial
@@ -1040,7 +1062,7 @@ export function StickerStudio() {
           <p className="mt-3 max-w-md text-xs font-semibold leading-5 text-[#397b68]">PaperBloom | ඔබේ සිතුවිලිවලට ලස්සන හැඩයක්. 🌸</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <button className="primary-button" data-trial-allow onClick={() => { setKind("sticker"); changeSection("Create sticker"); }}><Sparkles size={16}/> Create new sticker <ArrowRight size={15}/></button>
-            <button className="secondary-button" data-trial-allow onClick={() => { setKind("cover"); setSelectedTemplateId("cover-rose-garden"); changeSection("Create sticker"); }}><BookOpen size={16}/> Create cover label</button>
+            <button className="secondary-button" data-trial-allow onClick={() => { setKind("cover"); setSelectedTemplateId("cover-rose-garden"); changeSection("Create sticker"); }}><BookOpen size={16}/> Create notebook cover</button>
           </div>
         </div>
         <div className="hero-art" aria-hidden="true"><div className="hero-sun">✿</div><div className="hero-sticker"><span>✦</span><Image className="hero-sticker-logo" src="/bookshop-icon.svg" width={30} height={30} unoptimized alt=""/><b>PaperBloom</b><small>STATIONERY · CREATIVE</small></div><div className="hero-star">✷</div><div className="hero-pencil">✎</div></div>
@@ -1112,7 +1134,7 @@ export function StickerStudio() {
           <button className={`filter-chip ${templateCollection === "new" ? "selected" : ""}`} onClick={() => { setTemplateCollection("new"); setKind("sticker"); }}>New Designs · {newDesignTemplates.length + customArtworkTemplates.length + printableLabelTemplates.length + 1}</button>
           <span className="mx-1 h-5 w-px bg-[#eae6e0]"/>
           <button className={`filter-chip ${kind === "sticker" ? "selected" : ""}`} onClick={() => setKind("sticker")}>Name stickers</button>
-          <button className={`filter-chip ${kind === "cover" ? "selected" : ""}`} onClick={() => { setTemplateCollection("existing"); setKind("cover"); }}>Cover labels</button>
+          <button className={`filter-chip ${kind === "cover" ? "selected" : ""}`} onClick={() => { setTemplateCollection("existing"); setKind("cover"); }}>Notebook covers</button>
           <div className="search-box ml-auto"><Search size={15}/><input placeholder="Find a style" value={search} onChange={e => setSearch(e.target.value)}/></div>
         </div>
         {templateCollection === "new" && <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Print-ready template categories">
@@ -1124,13 +1146,22 @@ export function StickerStudio() {
       </div>
       : <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="soft-card p-5 md:p-7">
-          <div className="mb-5 flex items-center justify-between"><div><h2 className="font-bold">Who’s this for?</h2><p className="mt-1 text-xs text-slate-500">Just the name is enough to get started.</p></div><span className="step-number">01</span></div>
+          <div className="mb-5 flex items-center justify-between"><div><h2 className="font-bold">{kind === "cover" ? "Create a notebook cover" : "Who’s this for?"}</h2><p className="mt-1 text-xs text-slate-500">{kind === "cover" ? "Enter the student once; every selected subject prints as its own A4 cover." : "Just the name is enough to get started."}</p></div><span className="step-number">01</span></div>
           <label className="field-label">Student name <span className="required">*</span><input ref={element => { studentInputRefs.current.name = element; }} onFocus={() => beginStudentInput("name")} onCompositionStart={() => composingStudentFields.current.add("name")} lang={containsSinhala(student.name) || typingMode !== "English" ? "si" : "en"} dir="auto" spellCheck={false} autoComplete="off" autoCapitalize="off" autoCorrect="off" className="text-input mt-2" placeholder={typingMode === "Singlish to Sinhala" ? "Type Singlish · amma → අම්මා as you type" : "e.g. Amaya Perera / අමායා පෙරේරා"} value={student.name} onChange={e => updateStudentInput("name", e.target.value, e.target.selectionStart ?? e.target.value.length, composingStudentFields.current.has("name"))} onCompositionEnd={e => finishStudentComposition("name", e.currentTarget.value, e.currentTarget.selectionStart ?? e.currentTarget.value.length)}/></label>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="field-label">{language === "Sinhala" ? "ශ්‍රේණිය" : language === "Sinhala + English" ? "Grade / ශ්‍රේණිය" : "Grade"} <input lang={language === "English" ? "en" : "si"} list="grade-options" dir="auto" spellCheck={false} autoComplete="off" autoCapitalize="off" autoCorrect="off" className="text-input mt-2" placeholder={language === "Sinhala" ? "1 සිට 13 දක්වා" : language === "Sinhala + English" ? "Grade 1–13 / 1–13 ශ්‍රේණිය" : "Optional — Grade 1 to 13"} value={student.grade} onChange={e => { const grade = updateStudentInput("grade", e.target.value); const gradeNumber = Number(grade.replace(/\D/g, "")); setStudent(previous => ({ ...previous, stream: gradeNumber >= 12 ? previous.stream : "" })); }}/><datalist id="grade-options">{Array.from({ length: 13 }, (_, i) => <option key={i + 1} value={language === "English" ? `Grade ${i + 1}` : language === "Sinhala" ? `${i + 1} ශ්‍රේණිය` : `Grade ${i + 1} / ${i + 1} ශ්‍රේණිය`}/>)}</datalist></label>
             <label className="field-label">Grade display language <select className="text-input mt-2" value={language} onChange={e => setLanguage(e.target.value as LanguageMode)}><option value="English">English</option><option value="Sinhala">Sinhala</option><option value="Sinhala + English">Sinhala + English</option></select></label>
           </div>
           <label className="field-label mt-4 block">Text input mode <select className="text-input mt-2 max-w-sm" value={typingMode} onChange={e => setTypingMode(e.target.value as TextInputMode)}><option value="English">English</option><option value="Sinhala Keyboard">Sinhala Keyboard</option><option value="Singlish to Sinhala" disabled={transliterationStatus !== "ready"}>Singlish to Sinhala{transliterationStatus === "loading" ? " · loading" : transliterationStatus === "error" ? " · unavailable" : ""}</option></select></label>
+          {kind === "cover" && <details className="mt-4 rounded-xl border border-[#eee9e2] bg-[#fbfaf7] p-4">
+            <summary className="cursor-pointer text-sm font-semibold">Optional cover details · title, teacher, year, index</summary>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="field-label">Book title<input className="text-input mt-2" dir="auto" value={student.bookTitle} onChange={event => setStudent(previous => ({ ...previous, bookTitle: event.target.value }))} placeholder="e.g. My Science Book"/></label>
+              <label className="field-label">Teacher<input className="text-input mt-2" dir="auto" value={student.teacher} onChange={event => setStudent(previous => ({ ...previous, teacher: event.target.value }))} placeholder="Optional"/></label>
+              <label className="field-label">Year<input className="text-input mt-2" inputMode="numeric" value={student.schoolYear} onChange={event => setStudent(previous => ({ ...previous, schoolYear: event.target.value }))} placeholder={String(new Date().getFullYear())}/></label>
+              <label className="field-label">Index number<input className="text-input mt-2" value={student.indexNumber} onChange={event => setStudent(previous => ({ ...previous, indexNumber: event.target.value }))} placeholder="Optional"/></label>
+            </div>
+          </details>}
           {usingCustomSize && <section className="mt-4 rounded-2xl border border-[#e5dced] bg-[#fbf9ff] p-4">
             <div className="mb-3"><b className="text-sm">Custom Size Sticker</b><p className="mt-1 text-[11px] text-slate-500">Set the final physical dimensions. The preview keeps the same proportions as your print.</p></div>
             <label className="field-label block">Sticker style<select className="text-input mt-2" value={customStyle.id} onChange={e => setCustomStyleTemplateId(e.target.value)}><optgroup label="Custom size"><option value={CUSTOM_SIZE_TEMPLATE_ID}>Scholar’s Apple · Custom dimensions</option></optgroup>{originalStickerStyles.length > 0 && <optgroup label="Original sticker styles">{originalStickerStyles.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</optgroup>}{newStickerStyles.length > 0 && <optgroup label="New sticker designs">{newStickerStyles.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</optgroup>}{savedStickerStyles.length > 0 && <optgroup label="My saved sticker styles">{savedStickerStyles.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</optgroup>}</select><span className="mt-1 block text-[10px] font-normal text-slate-500">Choose a named sticker design below; your custom width and height stay unchanged.</span></label>

@@ -107,17 +107,73 @@ function artworkTemplate(art: StarterArtwork): StickerTemplate {
   };
 }
 
-const coverTemplate = artworkTemplate(starterArtwork[1]);
-coverTemplate.id = "cover-rose-garden";
-coverTemplate.name = "Rose Garden Notebook";
-coverTemplate.kind = "cover";
-coverTemplate.widthMm = 100;
-coverTemplate.heightMm = 60;
-coverTemplate.favourite = false;
+function notebookCoverTemplate(
+  art: StarterArtwork,
+  options: { id: string; name: string; background: string; border: string; accent: string; decoration: string }
+): StickerTemplate {
+  const template = artworkTemplate(art);
+  template.id = options.id;
+  template.name = options.name;
+  template.kind = "cover";
+  template.widthMm = 202;
+  template.heightMm = 289;
+  template.background = options.background;
+  template.borderColor = options.border;
+  template.accent = options.accent;
+  template.borderWidth = 1.2;
+  template.radius = 1;
+  template.innerBorder = true;
+  template.decoration = options.decoration;
+  template.images = (template.images ?? []).map(image => ({ ...image, x: 50, y: 29, width: 28 }));
+  template.texts = (template.texts ?? []).map(text => ({
+    ...text,
+    x: 50,
+    width: 84,
+    y: text.field === "name" ? 51 : text.field === "school" ? 62 : text.field === "grade" ? 72 : text.field === "subject" ? 83 : text.y,
+    fontSize: text.field === "name" ? 30 : text.field === "subject" ? 22 : 15,
+    height: text.field === "name" ? 28 : 20,
+    color: options.accent
+  }));
+  template.texts.push(...([
+    { customLabel: "Book title", y: 13, fontSize: 17 },
+    { customLabel: "Teacher", y: 90, fontSize: 12 },
+    { customLabel: "Year", y: 95, fontSize: 12 },
+    { customLabel: "Index number", y: 99, fontSize: 12 }
+  ] as const).map(({ customLabel, y, fontSize }) => ({
+    id: `${options.id}-${customLabel.toLowerCase().replaceAll(" ", "-")}`,
+    field: "custom" as const,
+    customLabel,
+    text: "",
+    visible: false,
+    fontFamily: "Inter" as const,
+    fontSize,
+    height: 6,
+    wrap: true,
+    color: options.accent,
+    bold: customLabel === "Book title",
+    align: "center" as const,
+    x: 50,
+    y,
+    width: 84,
+    rotation: 0,
+    lineHeight: 1.12,
+    letterSpacing: 0
+  })));
+  return template;
+}
+
+const notebookCoverTemplates: StickerTemplate[] = [
+  notebookCoverTemplate(starterArtwork[1], { id: "cover-rose-garden", name: "Floral Study Garden", background: "#fff8fb", border: "#e84d91", accent: "#8f315f", decoration: "collection-floral" }),
+  notebookCoverTemplate(starterArtwork[0], { id: "cover-forest-science", name: "Forest Explorer", background: "#f5f8ee", border: "#66844a", accent: "#405d38", decoration: "collection-nature" }),
+  notebookCoverTemplate(starterArtwork[4], { id: "cover-ocean-learning", name: "Ocean Learning", background: "#eff9fb", border: "#418fa8", accent: "#276479", decoration: "collection-ocean" }),
+  notebookCoverTemplate(starterArtwork[8], { id: "cover-woodland-reader", name: "Woodland Reader", background: "#f3f6ed", border: "#76935e", accent: "#425d3c", decoration: "collection-storybook" }),
+  notebookCoverTemplate(starterArtwork[3], { id: "cover-pastel-dreams", name: "Pastel Imagination", background: "#f8f5ff", border: "#9b82c5", accent: "#514879", decoration: "collection-premium-pastel" }),
+  notebookCoverTemplate(starterArtwork[6], { id: "cover-starry-knowledge", name: "Starry Knowledge", background: "#eff5fc", border: "#5c79a5", accent: "#344c75", decoration: "collection-galaxy" })
+];
 
 export const starterTemplates: StickerTemplate[] = [
   ...starterArtwork.map(artworkTemplate),
-  coverTemplate
+  ...notebookCoverTemplates
 ];
 
 export function createStarterAsset(artwork: StarterArtwork, blob: Blob): ImageAsset {

@@ -835,6 +835,18 @@ button { cursor: pointer; }
 .custom-print-art-image.fit-cover,.custom-print-art-image.fit-crop { object-fit: cover; }
 .custom-print-label-text { position: absolute; z-index: 2; inset: 5%; display: flex; align-items: center; justify-content: center; overflow: hidden; line-height: 1.08; overflow-wrap: anywhere; white-space: pre-wrap; }
 .custom-print-label-caption { position: absolute; right: 2px; bottom: 1px; z-index: 3; font-size: 7px; }
+.custom-font-selector { border: 1px solid #e8eee9; border-radius: 12px; background: #fbfdfb; padding: 12px; }
+.custom-font-search { display: flex; min-height: 38px; align-items: center; gap: 8px; border: 1px solid #e5e9e7; border-radius: 9px; background: #fff; padding: 0 10px; color: #7a8793; }
+.custom-font-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: #344256; font-size: 11px; }
+.custom-font-tabs,.custom-font-apply-modes { display: flex; flex-wrap: wrap; gap: 6px; }
+.custom-font-tabs button,.custom-font-apply-modes button { min-height: 32px; border: 1px solid #e6e9e6; border-radius: 8px; background: #fff; padding: 6px 10px; color: #697687; font-size: 10px; font-weight: 600; }
+.custom-font-tabs button.selected,.custom-font-apply-modes button.selected { border-color: #9fc5ae; background: #eef6f0; color: #31725f; }
+.custom-font-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 7px; }
+.custom-font-card { position: relative; display: grid; min-width: 0; min-height: 76px; align-content: center; gap: 5px; border: 1px solid #e8e7e1; border-radius: 9px; background: #fff; padding: 8px; text-align: left; }
+.custom-font-card:hover,.custom-font-card.selected { border-color: #57917a; background: #f0f7f1; box-shadow: 0 0 0 1px #57917a22; }
+.custom-font-card > svg { position: absolute; top: 6px; right: 6px; color: #397b68; }
+.custom-font-card-sample { overflow: hidden; color: #26394a; font-size: 19px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.custom-font-card-name { overflow: hidden; padding-right: 14px; color: #62706d; font-size: 9px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .custom-print-page-wrap { display: flex; max-height: 420px; justify-content: center; overflow: hidden; border: 1px solid #eee9e2; border-radius: 12px; background: #ece8e1; padding: 8px; }
 .custom-print-scaled-page { zoom: .32; flex: none; }
 .custom-print-page { position: relative; display: block; flex: none; overflow: hidden; background: white; box-shadow: 0 3px 14px #32302b18; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
@@ -1771,6 +1783,12 @@ button { cursor: pointer; }
 .a4-notice-thumbnail.a4-notice-bold i { background: rgb(255 255 255 / 55%); }
 .a4-notice-thumbnail.a4-notice-property { border: 3px double var(--notice-accent); }
 .a4-notice-thumbnail.a4-notice-minimal { border-color: #222; }
+.a4-notice-thumbnail.a4-notice-floral { border: 1px solid #b9d8bd; background: linear-gradient(145deg,#fff 60%,#edf7ef); }
+.a4-notice-thumbnail.a4-notice-modern { border: 0; background: linear-gradient(120deg,var(--notice-accent) 0 30%,#f0edfa 30%); }
+.a4-notice-thumbnail.a4-notice-modern span,.a4-notice-thumbnail.a4-notice-modern b { color: #fff; }
+.a4-notice-thumbnail.a4-notice-modern i { margin-left: 35%; }
+.a4-notice-thumbnail.a4-notice-elegant { border: 2px solid #d6bd8b; outline: 1px solid #d6bd8b; outline-offset: -5px; background: #fffdf8; }
+.a4-notice-thumbnail.a4-notice-traditional { border: 4px double var(--notice-accent); background: repeating-linear-gradient(45deg,#fff 0 12px,#f8eee5 12px 14px); }
 .a4-notice-editor { display: grid; gap: 16px; }
 .a4-notice-editor-toolbar,.a4-notice-preview-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .a4-notice-edit-grid { display: grid; grid-template-columns: minmax(280px,.8fr) minmax(0,1.2fr); align-items: start; gap: 17px; }
@@ -1785,36 +1803,62 @@ button { cursor: pointer; }
 .a4-notice-setting-grid input[type="range"] { display: block; width: 100%; margin-top: 10px; accent-color: #397b68; }
 .a4-notice-color { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .a4-notice-color input { width: 42px; height: 32px; border: 1px solid #e6e9e6; border-radius: 8px; background: white; padding: 3px; }
+.a4-notice-font-settings { border: 1px solid #ece8e2; border-radius: 11px; background: #fbfaf7; padding: 11px; }
+.a4-notice-font-settings summary { cursor: pointer; color: #485c52; font-size: 11px; font-weight: 700; }
+.a4-notice-font-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(112px,1fr)); gap: 7px; margin-top: 10px; }
+.a4-notice-font-grid button { display: grid; min-width: 0; gap: 4px; border: 1px solid #e7e5df; border-radius: 8px; background: white; padding: 8px; text-align: left; }
+.a4-notice-font-grid button.selected,.a4-notice-font-grid button:hover { border-color: #57917a; background: #f0f7f1; }
+.a4-notice-font-grid button > span { overflow: hidden; color: #344256; font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
+.a4-notice-font-grid button > small { overflow: hidden; color: #697687; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .a4-notice-preview-column { position: sticky; top: 78px; min-width: 0; }
 .a4-notice-preview-header { margin-bottom: 10px; }
 .a4-notice-preview-header > div { display: grid; gap: 3px; }
 .a4-notice-preview-header b { color: #354158; font-size: 12px; }
 .a4-notice-preview-header span,.a4-notice-print-note { color: #808b98; font-size: 10px; }
 .a4-notice-preview-stage { display: grid; max-height: calc(100vh - 190px); min-height: 500px; place-items: start center; overflow: auto; border: 1px solid #e9e5df; border-radius: 15px; background: #efede8; padding: 18px; }
-.a4-notice-paper { position: relative; display: flex; width: min(100%,520px); aspect-ratio: 210 / 297; flex-direction: column; overflow: hidden; border: 1px solid #ddd; background: #fff; color: var(--notice-ink); font-family: "Noto Sans Sinhala","Inter",sans-serif; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.a4-notice-paper { position: relative; display: flex; box-sizing: border-box; width: min(100%,520px); aspect-ratio: 210 / 297; flex-direction: column; overflow: hidden; border: 1px solid #ddd; background: #fff; color: var(--notice-ink); font-family: "Noto Sans Sinhala","Inter",sans-serif; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.a4-notice-paper .a4-notice-inner,.a4-notice-paper .a4-notice-heading h2,.a4-notice-paper .a4-notice-kicker,.a4-notice-paper .a4-notice-translation,.a4-notice-paper .a4-notice-field,.a4-notice-paper .a4-notice-field-label,.a4-notice-paper .a4-notice-field p { font-family: var(--notice-font-family); }
 .a4-notice-paper.landscape { aspect-ratio: 297 / 210; }
-.a4-notice-inner { display: flex; width: 100%; height: 100%; min-height: 0; flex-direction: column; padding: 8%; text-align: var(--notice-align); }
+.a4-notice-inner { display: flex; box-sizing: border-box; width: 100%; height: 100%; min-height: 0; flex-direction: column; padding: 8%; text-align: var(--notice-align); }
 .a4-notice-paper.a4-notice-bold { border: 0; }
-.a4-notice-bold .a4-notice-heading { margin: -8% -8% 7%; border-bottom: 5px solid var(--notice-ink); background: var(--notice-accent); padding: 9% 8% 7%; color: white; }
+.a4-notice-paper.a4-notice-floral { border: 2px solid #b9d8bd; background: linear-gradient(145deg,#fff 60%,#edf7ef); }
+.a4-notice-floral .a4-notice-heading { border-bottom: 1px solid #b9d8bd; padding-bottom: calc(5% * var(--notice-fit-scale)); }
+.a4-notice-paper.a4-notice-modern { border: 0; }
+.a4-notice-modern .a4-notice-heading { margin: -8% -8% calc(7% * var(--notice-fit-scale)); border-left: 12mm solid var(--notice-accent); background: var(--notice-soft); padding: calc(8% * var(--notice-fit-scale)); }
+.a4-notice-paper.a4-notice-elegant { border: 2mm double var(--notice-accent); background: #fffdf8; }
+.a4-notice-elegant .a4-notice-inner { padding: 9%; }
+.a4-notice-elegant .a4-notice-heading { border-bottom: .5mm solid var(--notice-accent); padding-bottom: calc(6% * var(--notice-fit-scale)); }
+.a4-notice-paper.a4-notice-traditional { border: 3mm double var(--notice-accent); background: repeating-linear-gradient(45deg,#fff 0 22mm,#faf4ed 22mm 23mm); }
+.a4-notice-traditional .a4-notice-inner { padding: 8%; }
+.a4-notice-traditional .a4-notice-heading { border-bottom: 1mm solid var(--notice-accent); padding-bottom: calc(5% * var(--notice-fit-scale)); }
+.a4-notice-bold .a4-notice-heading { margin: -8% -8% calc(7% * var(--notice-fit-scale)); border-bottom: 5px solid var(--notice-ink); background: var(--notice-accent); padding: calc(9% * var(--notice-fit-scale)) calc(8% * var(--notice-fit-scale)) calc(7% * var(--notice-fit-scale)); color: white; }
 .a4-notice-bold .a4-notice-kicker,.a4-notice-bold .a4-notice-heading h2,.a4-notice-bold .a4-notice-translation { color: white; }
 .a4-notice-property { border: 5px double var(--notice-accent); }
 .a4-notice-property .a4-notice-inner { padding: 7%; }
-.a4-notice-property .a4-notice-heading { border-bottom: 2px solid var(--notice-accent); padding-bottom: 5%; }
+.a4-notice-property .a4-notice-heading { border-bottom: 2px solid var(--notice-accent); padding-bottom: calc(5% * var(--notice-fit-scale)); }
 .a4-notice-minimal { border: 1px solid #202020; }
 .a4-notice-paper.landscape .a4-notice-inner { padding: 6%; }
-.a4-notice-paper.landscape.a4-notice-bold .a4-notice-heading { margin: -6% -6% 4%; padding: 6%; }
+.a4-notice-paper.landscape.a4-notice-bold .a4-notice-heading { margin: -6% -6% calc(4% * var(--notice-fit-scale)); padding: calc(6% * var(--notice-fit-scale)); }
 .a4-notice-paper.landscape.a4-notice-property .a4-notice-inner { padding: 5%; }
-.a4-notice-heading { display: grid; justify-items: var(--notice-align); gap: 3mm; }
-.a4-notice-kicker,.a4-notice-translation { color: var(--notice-accent); font-family: "Noto Sans Sinhala","Inter",sans-serif; font-size: 9pt; font-weight: 700; line-height: 1.45; }
-.a4-notice-heading h2 { width: 100%; margin: 0; color: var(--notice-text); font-family: "Noto Sans Sinhala","Inter",sans-serif; font-size: var(--notice-heading-size); font-weight: 800; line-height: 1.32; overflow-wrap: anywhere; white-space: pre-line; }
-.a4-notice-translation { font-size: 13pt; }
-.a4-notice-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-content: start; gap: 6mm 5mm; margin-top: 9%; }
+.a4-notice-heading { display: grid; flex: 0 0 auto; justify-items: var(--notice-align); gap: calc(3mm * var(--notice-fit-scale)); }
+.a4-notice-kicker,.a4-notice-translation { color: var(--notice-accent); font-family: "Noto Sans Sinhala","Inter",sans-serif; font-size: calc(9pt * var(--notice-fit-scale)); font-weight: 700; line-height: 1.4; }
+.a4-notice-heading h2 { width: 100%; margin: 0; color: var(--notice-text); font-family: "Noto Sans Sinhala","Inter",sans-serif; font-size: calc(var(--notice-heading-size) * var(--notice-fit-scale)); font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; white-space: pre-line; }
+.a4-notice-translation { font-size: calc(13pt * var(--notice-fit-scale)); }
+.a4-notice-fields { display: grid; flex: 0 0 auto; min-width: 0; grid-template-columns: repeat(2,minmax(0,1fr)); align-content: start; gap: calc(6mm * var(--notice-fit-scale)) calc(5mm * var(--notice-fit-scale)); margin-top: calc(9% * var(--notice-fit-scale)); }
+.a4-notice-photo { display: block; flex: 0 1 auto; width: 100%; max-height: var(--notice-photo-limit); min-height: 0; margin-top: calc(4% * var(--notice-fit-scale)); border-radius: 2mm; object-fit: contain; }
+.a4-notice-photo-control { display: grid; gap: 8px; border: 1px solid #ece8e2; border-radius: 11px; background: #fbfaf7; padding: 12px; }
+.a4-notice-photo-control b { color: #354158; font-size: 11px; }
+.a4-notice-photo-control p { margin: 3px 0 0; color: #808b98; font-size: 10px; }
+.a4-notice-photo-preview { display: flex; align-items: center; gap: 10px; }
+.a4-notice-photo-preview img { width: 74px; height: 56px; border-radius: 7px; object-fit: cover; }
+.a4-notice-photo-preview > span { color: #ad514d; font-size: 10px; }
 .a4-notice-field { min-width: 0; text-align: var(--notice-align); overflow-wrap: anywhere; }
 .a4-notice-field.wide,.a4-notice-field.contact { grid-column: 1 / -1; }
-.a4-notice-field-label { display: block; margin-bottom: 1.5mm; color: var(--notice-accent); font-size: 10pt; font-weight: 700; line-height: 1.45; }
-.a4-notice-field p { margin: 0; color: var(--notice-ink); font-size: var(--notice-body-size); font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-line; }
-.a4-notice-field.contact p { color: var(--notice-text); font-family: "Inter","Noto Sans Sinhala",sans-serif; font-size: calc(var(--notice-body-size) * 1.45); font-weight: 800; letter-spacing: .03em; }
-.a4-notice-footer { display: flex; justify-content: var(--notice-align); margin-top: auto; border-top: 1px solid var(--notice-accent); padding-top: 4mm; color: var(--notice-accent); font-size: 9pt; font-weight: 700; line-height: 1.5; }
+.a4-notice-field-label { display: block; margin-bottom: calc(1.5mm * var(--notice-fit-scale)); color: var(--notice-accent); font-size: calc(10pt * var(--notice-fit-scale)); font-weight: 700; line-height: 1.35; }
+.a4-notice-field p { margin: 0; color: var(--notice-ink); font-size: calc(var(--notice-body-size) * var(--notice-fit-scale)); font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; white-space: pre-line; }
+.a4-notice-field.contact p { color: var(--notice-text); font-family: "Inter","Noto Sans Sinhala",sans-serif; font-size: calc(var(--notice-body-size) * var(--notice-fit-scale) * 1.3); font-weight: 800; letter-spacing: .03em; }
+.a4-notice-photo { object-position: center; }
+.a4-notice-footer { display: flex; justify-content: var(--notice-align); margin-top: auto; border-top: 1px solid var(--notice-accent); padding-top: calc(4mm * var(--notice-fit-scale)); color: var(--notice-accent); font-size: calc(9pt * var(--notice-fit-scale)); font-weight: 700; line-height: 1.4; }
 .a4-notice-print-note { display: flex; align-items: flex-start; gap: 7px; margin: 10px 0; line-height: 1.6; }
 .a4-notice-print-host { display: none; }
 .a4-notice-saved-card .a4-notice-thumbnail { margin-bottom: 2px; }
@@ -1836,6 +1880,11 @@ button { cursor: pointer; }
 }
 @page a4NoticePortrait { size: A4 portrait; margin: 0; }
 @page a4NoticeLandscape { size: A4 landscape; margin: 0; }
+@page a5NoticePortrait { size: A5 portrait; margin: 0; }
+@page a5NoticeLandscape { size: A5 landscape; margin: 0; }
+@page a6NoticePortrait { size: A6 portrait; margin: 0; }
+@page a6NoticeLandscape { size: A6 landscape; margin: 0; }
+@page customNotice { margin: 0; }
 @media print {
   html.a4-notice-print-mode,
   html.a4-notice-print-mode body { width: auto !important; min-height: 0 !important; margin: 0 !important; background: #fff !important; }
@@ -1852,8 +1901,13 @@ button { cursor: pointer; }
   html.a4-notice-print-mode .main-content > :not(.a4-notice-library),
   html.a4-notice-print-mode .a4-notice-library > .no-print { display: none !important; }
   html.a4-notice-print-mode .a4-notice-print-host { display: block !important; position: static !important; }
-  html.a4-notice-print-mode .a4-notice-paper { width: 210mm !important; height: 297mm !important; max-width: none !important; margin: 0 !important; overflow: hidden !important; border-width: 1mm !important; page: a4NoticePortrait; }
-  html.a4-notice-print-mode .a4-notice-paper.landscape { width: 297mm !important; height: 210mm !important; page: a4NoticeLandscape; }
+  html.a4-notice-print-mode .a4-notice-paper { width: var(--notice-page-width) !important; height: var(--notice-page-height) !important; max-width: none !important; margin: 0 !important; overflow: hidden !important; border-width: 1mm !important; page: a4NoticePortrait; }
+  html.a4-notice-print-mode .a4-notice-paper.paper-custom { page: customNotice; }
+  html.a4-notice-print-mode[data-a4-notice-paper-size="a5"] .a4-notice-paper { page: a5NoticePortrait; }
+  html.a4-notice-print-mode[data-a4-notice-paper-size="a6"] .a4-notice-paper { page: a6NoticePortrait; }
+  html.a4-notice-print-mode .a4-notice-paper.landscape { page: a4NoticeLandscape; }
+  html.a4-notice-print-mode[data-a4-notice-paper-size="a5"] .a4-notice-paper.landscape { page: a5NoticeLandscape; }
+  html.a4-notice-print-mode[data-a4-notice-paper-size="a6"] .a4-notice-paper.landscape { page: a6NoticeLandscape; }
   html.a4-notice-print-mode .a4-notice-paper.a4-notice-bold { border-width: 0 !important; }
   html.a4-notice-print-mode .a4-notice-paper.a4-notice-property { border-width: 1.5mm !important; }
   html.a4-notice-print-mode .a4-notice-inner { height: 100% !important; }

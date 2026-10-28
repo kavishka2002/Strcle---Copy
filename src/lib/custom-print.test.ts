@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateCustomPrintLayout, createNumberValues, fitCustomPrintFontSize, formatNumberLabel, parseCustomLabels, type CustomPrintItem, updateCustomPrintItems } from "./custom-print";
+import { calculateCustomPrintLayout, createNumberValues, fitCustomPrintFontSize, formatNumberLabel, getCustomPrintFontTargetIds, parseCustomLabels, type CustomPrintItem, updateCustomPrintItems } from "./custom-print";
 
 const label = (overrides: Partial<CustomPrintItem> = {}): CustomPrintItem => ({
   id: "item-1",
@@ -54,6 +54,19 @@ describe("custom print generators and A4 layout", () => {
 
     expect(updated[0]).toMatchObject({ widthMm: 32, fontSize: 28, background: "#aa0000", text: "A" });
     expect(updated[1]).toEqual(second);
+  });
+
+  it("chooses font targets for all, selected, and individual characters", () => {
+    const items = [
+      label({ id: "first", text: "අ" }),
+      label({ id: "second", text: "B" }),
+      label({ id: "shape", text: "" })
+    ];
+
+    expect(getCustomPrintFontTargetIds(items, "all", ["first"], "second")).toEqual(["first", "second"]);
+    expect(getCustomPrintFontTargetIds(items, "selected", ["second"], "first")).toEqual(["second"]);
+    expect(getCustomPrintFontTargetIds(items, "selected", [], "first")).toEqual(["first"]);
+    expect(getCustomPrintFontTargetIds(items, "individual", ["first", "second"], "second")).toEqual(["second"]);
   });
 
   it("changes width and height only for individually selected number stickers", () => {

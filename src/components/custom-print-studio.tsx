@@ -15,7 +15,8 @@ import { printCurrentPage } from "@/lib/print-page";
 import { englishFonts, sinhalaFonts } from "@/lib/font-catalog";
 import {
   calculateCustomPrintLayout, createNumberValues, fitCustomPrintFontSize, formatNumberLabel, parseCustomLabels,
-  type CustomPrintDesign, type CustomPrintFit, type CustomPrintFont, type CustomPrintItem,
+  getCustomPrintFontTargetIds, type CustomPrintDesign, type CustomPrintFit, type CustomPrintFont,
+  type CustomPrintFontTargetMode, type CustomPrintItem,
   type CustomPrintLayout, type CustomPrintShape, type CustomPrintTool, type NumberLabelStyle, updateCustomPrintItems
 } from "@/lib/custom-print";
 
@@ -63,6 +64,17 @@ const toolCards: Array<{ id: CustomPrintTool; name: string; description: string;
 
 const newId = () => crypto.randomUUID();
 const timestamp = () => Date.now();
+const CUSTOM_PRINT_RECENT_FONTS_KEY = "little-paper-custom-print-recent-fonts";
+const allCustomPrintFonts: CustomPrintFont[] = [...englishFonts, ...sinhalaFonts].map(font => font.family);
+
+function isSinhalaFont(family: CustomPrintFont): boolean {
+  return sinhalaFonts.some(font => font.family === family);
+}
+
+function containsSinhala(text: string): boolean {
+  return /[\u0D80-\u0DFF]/u.test(text);
+}
+
 const getDefaultDesign = (): CustomPrintDesign => ({
   id: newId(), name: "Custom print order", tool: "bulk-builder", kind: "order", items: [],
   printSettings: { orientation: "portrait", marginMm: 4, gapMm: 2, calibration: false, cutlines: false },
@@ -178,18 +190,81 @@ function CustomSheetPage({
   </div>;
 }
 
+function FontSelector({
+  selectedFamily,
+  recentFamilies,
+  onSelect
+}: {
+  selectedFamily: CustomPrintFont;
+  recentFamilies: CustomPrintFont[];
+  onSelect: (family: CustomPrintFont) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<"Sinhala" | "English">(isSinhalaFont(selectedFamily) ? "Sinhala" : "English");
+
+  const fonts = category === "Sinhala" ? sinhalaFonts : englishFonts;
+  const matchingFonts = fonts.filter(font => font.family.toLowerCase().includes(query.trim().toLowerCase()));
+  const recent = recentFamilies.filter(family =>
+    (!query.trim() || family.toLowerCase().includes(query.trim().toLowerCase())) &&
+    (category === "Sinhala" ? isSinhalaFont(family) : !isSinhalaFont(family))
+  );
+  const sample = category === "Sinhala" ? "අ ආ ඇ ඉ" : "Aa Bb 123";
+  const renderCard = (family: CustomPrintFont) => <button
+    type="button"
+    key={family}
+    className={`custom-font-card ${selectedFamily === family ? "selected" : ""}`}
+    aria-pressed={selectedFamily === family}
+    onClick={() => onSelect(family)}
+  >
+    <span className="custom-font-card-sample" style={{ fontFamily: `"${family}", sans-serif` }}>{sample}</span>
+    <span className="custom-font-card-name">{family}</span>
+    {selectedFamily === family && <Check size={14} aria-hidden="true"/>}
+  </button>;
+
+  return <section className="custom-font-selector" aria-label="Choose a font">
+    <div className="flex items-center justify-between gap-2">
+      <div><b className="text-sm">Choose a font</b><p className="mt-1 text-[11px] text-slate-500">Tap a preview to see how your text will look.</p></div>
+      <span className="rounded-full bg-[#e8f2ec] px-2.5 py-1 text-[10px] font-semibold text-[#397b68]">{selectedFamily}</span>
+    </div>
+    <div className="custom-font-search mt-3"><Search size={14}/><input aria-label="Search fonts by name" placeholder="Search fonts" value={query} onChange={event => setQuery(event.target.value)}/></div>
+    <div className="custom-font-tabs mt-2" role="tablist" aria-label="Font language">
+      {(["Sinhala", "English"] as const).map(value => <button
+        type="button"
+        role="tab"
+        aria-selected={category === value}
+        className={category === value ? "selected" : ""}
+        key={value}
+        onClick={() => setCategory(value)}
+      >{value} fonts</button>)}
+    </div>
+    {!query.trim() && recent.length > 0 && <div className="mt-3">
+      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Recently used</p>
+      <div className="custom-font-grid">{recent.map(renderCard)}</div>
+    </div>}
+    <div className="mt-3">
+      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">{query.trim() ? "Search results" : `${category} fonts`}</p>
+      {matchingFonts.length ? <div className="custom-font-grid">{matchingFonts.map(font => renderCard(font.family))}</div>
+        : <p className="rounded-lg bg-[#faf8f4] p-3 text-xs text-slate-500">No fonts match “{query}”. Try another name.</p>}
+    </div>
+  </section>;
+}
+
 export function CustomPrintStudio({
   assets, assetUrls, onUpload
 }: {
   assets: ImageAsset[];
   assetUrls: Record<string, string>;
-  onUpload: (files: FileList | null) => Promise<void>;
+  onUpload: (files: FileList | null) => Promise<string[] | void>;
 }) {
   const { confirm, prompt, host: dialogHost } = useAppDialog();
   const [activeTool, setActiveTool] = useState<ToolPage>("dashboard");
   const [design, setDesign] = useState<CustomPrintDesign>(getDefaultDesign);
   const [makerDesign, setMakerDesign] = useState<CustomPrintDesign | null>(null);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const [fontTargetMode, setFontTargetMode] = useState<CustomPrintFontTargetMode>("selected");
+  const [englishFontFamily, setEnglishFontFamily] = useState<CustomPrintFont>("Inter");
+  const [sinhalaFontFamily, setSinhalaFontFamily] = useState<CustomPrintFont>("Noto Sans Sinhala");
+  const [recentFontFamilies, setRecentFontFamilies] = useState<CustomPrintFont[]>([]);
   const [hexColorDrafts, setHexColorDrafts] = useState<Record<string, string>>({});
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const [savedDesigns, setSavedDesigns] = useState<CustomPrintDesign[]>([]);
@@ -320,10 +395,39 @@ export function CustomPrintStudio({
       if (active) {
         try { setRecentIds(recentCustomIds()); }
         catch (cause) { setError(cause instanceof Error ? cause.message : "Could not read recent custom designs."); }
+        try {
+          const storedFonts = localStorage.getItem(`${CUSTOM_PRINT_RECENT_FONTS_KEY}:${getActiveTenantId()}`);
+          const parsedFonts: unknown = storedFonts ? JSON.parse(storedFonts) : [];
+          if (Array.isArray(parsedFonts)) {
+            setRecentFontFamilies(parsedFonts.filter((family): family is CustomPrintFont =>
+              typeof family === "string" && allCustomPrintFonts.some(candidate => candidate === family)
+            ).slice(0, 6));
+          }
+        } catch (cause) {
+          console.error("Could not read recently used custom print fonts.", cause);
+          setError(cause instanceof Error ? cause.message : "Could not read recently used fonts.");
+        }
       }
     });
     return () => { active = false; };
   }, []);
+
+  const rememberFont = (family: CustomPrintFont) => {
+    const next = [family, ...recentFontFamilies.filter(previous => previous !== family)].slice(0, 6);
+    setRecentFontFamilies(next);
+    try {
+      localStorage.setItem(`${CUSTOM_PRINT_RECENT_FONTS_KEY}:${getActiveTenantId()}`, JSON.stringify(next));
+    } catch (cause) {
+      console.error("Could not save recently used custom print fonts.", cause);
+      setError(cause instanceof Error ? cause.message : "The font was selected, but recent fonts could not be saved.");
+    }
+  };
+
+  const rememberGeneratorFont = (family: CustomPrintFont, text: string) => {
+    if (containsSinhala(text)) setSinhalaFontFamily(family);
+    else setEnglishFontFamily(family);
+    rememberFont(family);
+  };
 
   const persistDesign = async (next: CustomPrintDesign, notice?: string) => {
     const saved = { ...next, kind: next.kind ?? "order", updatedAt: timestamp() };
@@ -400,6 +504,8 @@ export function CustomPrintStudio({
 
   const renderSelectedItemEditor = () => {
     if (!selectedItem || !editableDesign) return null;
+    const activeFontItem = selectedItems.find(item => item.text) ?? selectedItem;
+    const selectedTextItemCount = selectedItems.filter(item => item.text).length;
     const numericValue = (value: string, key: "widthMm" | "heightMm" | "fontSize" | "outlineWidth" | "rotation" | "copies") => {
       const number = Number(value);
       if (!Number.isFinite(number)) return;
@@ -422,7 +528,48 @@ export function CustomPrintStudio({
       <label className="field-label block">Sticker text<textarea className="text-input mt-2 min-h-16" lang="si" dir="auto" value={selectedItem.text} onChange={event => updateSelectedItems({ text: event.target.value, label: event.target.value || selectedItem.label })}/></label>
       <div className="mt-3 grid grid-cols-2 gap-3">{sizeControl("Width (mm)", "widthMm", 200)}{sizeControl("Height (mm)", "heightMm", 280)}</div>
       {selectedItems.some(item => item.text) && <div className="mt-3 grid grid-cols-2 gap-3">
-        <label className="field-label">Font family<select className="text-input mt-2" value={selectedItem.fontFamily} onChange={event => updateSelectedItems({ fontFamily: event.target.value as CustomPrintFont })}><optgroup label="English">{englishFonts.map(font => <option key={font.family} value={font.family}>{font.family}</option>)}</optgroup><optgroup label="Sinhala">{sinhalaFonts.map(font => <option key={font.family} value={font.family}>{font.family}</option>)}</optgroup></select></label>
+        <div className="col-span-2">
+          <p className="field-label mb-2">Apply the chosen font to</p>
+          <div className="custom-font-apply-modes" role="group" aria-label="Choose which stickers receive the font">
+            {([
+              ["all", "Apply to All"],
+              ["selected", "Apply to Selected"],
+              ["individual", "Change Individually"]
+            ] as const).map(([mode, label]) => <button
+              type="button"
+              key={mode}
+              className={fontTargetMode === mode ? "selected" : ""}
+              aria-pressed={fontTargetMode === mode}
+              onClick={() => setFontTargetMode(mode)}
+            >{label}</button>)}
+          </div>
+          <p className="mt-2 text-[10px] text-slate-500">
+            {fontTargetMode === "all" ? "The font changes on every text item in this design."
+              : fontTargetMode === "selected" ? `${selectedTextItemCount || 1} selected text item(s) will change together.`
+                : "Only the first selected text item will change."}
+          </p>
+          <div className="mt-3">
+            <FontSelector
+              key={`${activeFontItem.id}:${activeFontItem.fontFamily}`}
+              selectedFamily={activeFontItem.fontFamily}
+              recentFamilies={recentFontFamilies}
+              onSelect={family => {
+                const targetIds = getCustomPrintFontTargetIds(
+                  editableDesign.items,
+                  fontTargetMode,
+                  selectedItemIds,
+                  activeFontItem.id
+                );
+                if (!targetIds.length) {
+                  setError("Select at least one sticker containing text before choosing a font.");
+                  return;
+                }
+                updateSelectedItems({ fontFamily: family }, targetIds);
+                rememberFont(family);
+              }}
+            />
+          </div>
+        </div>
         <label className="field-label">Font size (pt)<input className="text-input mt-2" type="number" min="4" max="160" step="1" value={selectedItem.fontSize} onChange={event => numericValue(event.target.value, "fontSize")}/><input className="mt-2 w-full accent-[#397b68]" aria-label="Font size slider" type="range" min="4" max="160" value={selectedItem.fontSize} onChange={event => numericValue(event.target.value, "fontSize")}/></label>
         {colorField("Text colour", selectedItem.color, "color")}
         <label className="field-label">Text alignment<select className="text-input mt-2" value={selectedItem.align} onChange={event => updateSelectedItems({ align: event.target.value as CustomPrintItem["align"] })}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
@@ -501,7 +648,7 @@ export function CustomPrintStudio({
     if (!Number.isFinite(outlineValue) || outlineValue < 0 || outlineValue > 5) throw new RangeError("Outline thickness must be between 0 and 5 mm.");
     return {
       widthMm, heightMm, copies: copiesValue, background, color: textColor, outlineColor,
-      outlineWidth: outlineValue, borderStyle, fontSize: fontSizeValue, fontFamily: "Inter", bold, align, fit: pictureFit
+      outlineWidth: outlineValue, borderStyle, fontSize: fontSizeValue, fontFamily: englishFontFamily, bold, align, fit: pictureFit
     } as const;
   };
 
@@ -512,6 +659,7 @@ export function CustomPrintStudio({
       const itemColor = selectedColors.length ? selectedColors[index % selectedColors.length] : common.color;
       return makeItem(text, text || artworkOptions.find(option => option.id === artwork)?.name || "Shape", {
         ...common,
+        fontFamily: containsSinhala(text) ? sinhalaFontFamily : englishFontFamily,
         color: selectedColors.length ? itemColor : common.color,
         shape: selectedShape,
         artwork,
@@ -763,7 +911,7 @@ export function CustomPrintStudio({
     outlineWidth: Number(outlineWidth) || 0,
     borderStyle,
     fontSize: Number(fontSize) || 24,
-    fontFamily: "Inter",
+    fontFamily: containsSinhala(mainPreviewText) ? sinhalaFontFamily : englishFontFamily,
     bold,
     align,
     artwork: activeTool === "mini-art" && !selectedAssetId ? selectedArtwork : undefined,
@@ -871,6 +1019,12 @@ export function CustomPrintStudio({
             <b className="text-xs">Starter rewards</b><div className="flex flex-wrap gap-2">{rewards.map(reward => <button key={reward} className={`filter-chip ${selectedRewards.includes(reward) ? "selected" : ""}`} onClick={() => setSelectedRewards(previous => previous.includes(reward) ? previous.filter(value => value !== reward) : [...previous, reward])}>{selectedRewards.includes(reward) && <Check size={12}/>} {reward}</button>)}</div>
             <label className="field-label block">Extra custom messages<textarea className="text-input mt-2 min-h-20 resize-y" lang="si" dir="auto" value={customText} onChange={e => setCustomText(e.target.value)} placeholder={"Great effort!\nහොඳ වැඩක්"}/></label>
           </div>}
+          {activeTool !== "mini-art" && <FontSelector
+            key={containsSinhala(mainPreviewText) ? sinhalaFontFamily : englishFontFamily}
+            selectedFamily={containsSinhala(mainPreviewText) ? sinhalaFontFamily : englishFontFamily}
+            recentFamilies={recentFontFamilies}
+            onSelect={family => rememberGeneratorFont(family, mainPreviewText)}
+          />}
           <div className="mt-5 space-y-4 border-t border-[#f1ede8] pt-4">
             {activeTool !== "numbers" && activeTool !== "alphabet" && <div className="grid grid-cols-2 gap-3"><label className="field-label">Sticker width <div className="mt-2 flex gap-2"><input className="text-input min-w-0" type="number" min="0.1" step="0.1" value={width} onChange={e => setWidth(e.target.value)}/><select aria-label="Sticker size unit" className="text-input max-w-20" value={sizeUnit} onChange={e => setSizeUnit(e.target.value as "mm" | "cm")}><option value="mm">mm</option><option value="cm">cm</option></select></div></label><label className="field-label">Sticker height<input className="text-input mt-2" type="number" min="0.1" step="0.1" value={height} onChange={e => setHeight(e.target.value)}/></label></div>}
             {(activeTool === "numbers" || activeTool === "alphabet") && <div className="grid grid-cols-2 gap-3"><label className="field-label">Sticker width <div className="mt-2 flex gap-2"><input className="text-input min-w-0" type="number" min="0.1" step="0.1" value={width} onChange={e => setWidth(e.target.value)}/><select aria-label="Sticker size unit" className="text-input max-w-20" value={sizeUnit} onChange={e => setSizeUnit(e.target.value as "mm" | "cm")}><option value="mm">mm</option><option value="cm">cm</option></select></div></label><label className="field-label">Sticker height<input className="text-input mt-2" type="number" min="0.1" step="0.1" value={height} onChange={e => setHeight(e.target.value)}/></label></div>}
