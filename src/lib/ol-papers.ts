@@ -77,9 +77,44 @@ export type OlPaper = {
   syllabus: string | null;
   fileName: string;
   url: string;
+  driveFileId?: string;
+  displayName?: string;
+  fileType?: string;
 };
 
 export type PaperExam = "O/L" | "Grade 5 Scholarship";
+
+export type OlPaperManifestRecord = {
+  id: string;
+  year: number;
+  subject: string;
+  language: string;
+  displayName: string;
+  originalFileName: string;
+  driveFileId: string;
+  fileType: string;
+  syllabus: string | null;
+};
+
+export function createDriveOlPaper(record: OlPaperManifestRecord): OlPaper {
+  const downloadUrl = new URL("https://drive.google.com/uc");
+  downloadUrl.searchParams.set("export", "download");
+  downloadUrl.searchParams.set("id", record.driveFileId);
+
+  return {
+    id: record.id,
+    exam: "O/L",
+    year: record.year,
+    subject: record.subject,
+    medium: record.language === "Not specified" ? "Medium not specified" : `${record.language} medium`,
+    syllabus: record.syllabus,
+    fileName: record.originalFileName,
+    url: downloadUrl.href,
+    driveFileId: record.driveFileId,
+    displayName: record.displayName,
+    fileType: record.fileType
+  };
+}
 
 export function createOlPaper(folderName: string, fileName: string): OlPaper | null {
   const folderMatch = /^(\d{4}) ol$/i.exec(folderName);

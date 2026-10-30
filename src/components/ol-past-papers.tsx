@@ -3,6 +3,7 @@
 import { ArrowUpRight, BookOpen, FileText, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { OlPaper, PaperExam } from "@/lib/ol-papers";
+import type { DesktopDrivePdfDownloadProgress } from "@/components/service-worker-registration";
 
 const paperExams: PaperExam[] = ["O/L", "Grade 5 Scholarship"];
 
@@ -14,6 +15,18 @@ export function OlPastPapers() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [driveDownload, setDriveDownload] = useState<(DesktopDrivePdfDownloadProgress & { paperId: string }) | null>(null);
+  const [driveDownloadStatus, setDriveDownloadStatus] = useState<{ paperId: string; message: string; error: boolean } | null>(null);
+
+  useEffect(() => {
+    const desktop = window.littlePaperDesktop;
+    if (!desktop?.onDrivePdfDownloadProgress) return;
+    return desktop.onDrivePdfDownloadProgress(progress => {
+      setDriveDownload(current =>
+        current?.fileId === progress.fileId ? { ...current, ...progress } : current
+      );
+    });
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -75,6 +88,33 @@ export function OlPastPapers() {
     setYear("all");
     setSubject("all");
     setSearch("");
+  };
+
+  const openDrivePaper = async (paper: OlPaper) => {
+    const desktop = window.littlePaperDesktop;
+    if (!paper.driveFileId) return;
+    setDriveDownloadStatus(null);
+    setDriveDownload({ paperId: paper.id, fileId: paper.driveFileId, transferred: 0 });
+    try {
+      if (!desktop?.downloadDrivePdf) throw new Error("Please update the desktop app to download O/L papers.");
+      const result = await desktop.downloadDrivePdf({ fileId: paper.driveFileId, fileName: paper.fileName });
+      setDriveDownloadStatus({
+        paperId: paper.id,
+        message: result.source === "cache"
+          ? "Opened the saved PDF. / සුරැකි PDF ගොනුව විවෘත කළා."
+          : "Downloaded and opened the PDF. / PDF ගොනුව බාගත කර විවෘත කළා.",
+        error: false
+      });
+    } catch (downloadError) {
+      console.error("Could not download or open the O/L paper.", downloadError);
+      setDriveDownloadStatus({
+        paperId: paper.id,
+        message: "Could not download this paper. An internet connection is required the first time; downloaded papers work offline. / මෙම ප්‍රශ්න පත්‍රය බාගත කළ නොහැක. පළමු වරට බාගත කිරීමට අන්තර්ජාලය අවශ්‍යයි; කලින් බාගත කළ පත්‍ර නොබැඳිව විවෘත කළ හැක.",
+        error: true
+      });
+    } finally {
+      setDriveDownload(current => current?.paperId === paper.id ? null : current);
+    }
   };
 
   return (
@@ -174,9 +214,32 @@ export function OlPastPapers() {
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`Open ${paper.year} ${paper.subject}, ${paper.medium} PDF in a new tab`}
+                        onClick={event => {
+                          if (!paper.driveFileId || !window.littlePaperDesktop?.isDesktop) return;
+                          event.preventDefault();
+                          void openDrivePaper(paper);
+                        }}
                       >
                         Open PDF <ArrowUpRight size={14}/>
                       </a>
+                      {paper.driveFileId && (
+                        <div className="w-full" aria-live="polite">
+                          {driveDownload?.paperId === paper.id && (
+                            <>
+                              <progress className="desktop-update-progress mt-2" max="100" value={driveDownload.percent} aria-label={`Downloading ${paper.subject} PDF`}/>
+                              <p className="mt-1 text-xs text-slate-500">
+                                Downloading paper / බාගත කරමින්
+                                {driveDownload.percent === undefined ? "…" : `… ${Math.round(driveDownload.percent)}%`}
+                              </p>
+                            </>
+                          )}
+                          {driveDownloadStatus?.paperId === paper.id && (
+                            <p className={`mt-1 text-xs ${driveDownloadStatus.error ? "text-red-600" : "text-slate-500"}`} role={driveDownloadStatus.error ? "alert" : "status"}>
+                              {driveDownloadStatus.message}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </article>
                   ))}
                 </div>
@@ -185,8 +248,8 @@ export function OlPastPapers() {
           </>
         ) : !selectedYearHasPapers ? (
           <div className="ol-past-papers-state">
-            <h3>No local {exam} PDFs for {year}</h3>
-            <p>There are no PDF files for this year in the local papers folder.</p>
+            <h3>No {exam} papers for {year}</h3>
+            <p>There are no papers for this year in the available catalogue.</p>
           </div>
         ) : (
           <div className="ol-past-papers-state">

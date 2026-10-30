@@ -2,9 +2,14 @@ import { access, cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { shouldCopyPublicAsset } from "./public-asset-copy.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const desktopOutputDirectory = path.join(projectRoot, ".next-desktop");
+const desktopOutputDirectory = path.join(
+  projectRoot,
+  process.env.LITTLEPAPER_DESKTOP_DIST_DIR || ".next-desktop"
+);
+const desktopDistDirectoryName = path.basename(desktopOutputDirectory);
 const standaloneDirectory = path.join(desktopOutputDirectory, "standalone");
 const serverPath = path.join(standaloneDirectory, "server.js");
 const publicDirectory = path.join(projectRoot, "public");
@@ -21,10 +26,14 @@ try {
 }
 
 await Promise.all([
-  cp(publicDirectory, path.join(standaloneDirectory, "public"), { recursive: true, force: true }),
-  mkdir(path.join(standaloneDirectory, ".next-desktop"), { recursive: true })
+  cp(publicDirectory, path.join(standaloneDirectory, "public"), {
+    recursive: true,
+    force: true,
+    filter: assetPath => shouldCopyPublicAsset(publicDirectory, assetPath)
+  }),
+  mkdir(path.join(standaloneDirectory, desktopDistDirectoryName), { recursive: true })
 ]);
-await cp(staticDirectory, path.join(standaloneDirectory, ".next-desktop", "static"), { recursive: true, force: true });
+await cp(staticDirectory, path.join(standaloneDirectory, desktopDistDirectoryName, "static"), { recursive: true, force: true });
 
 const iconSvg = await readFile(iconSourcePath);
 const iconPngs = await Promise.all(iconSizes.map(size =>

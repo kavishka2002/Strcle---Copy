@@ -26,6 +26,7 @@ import { englishSubjectName, isEnglishCardSubject, subjectNameForLanguage } from
 import { StickerDecoration } from "@/components/sticker-decoration";
 import { CustomPrintStudio } from "@/components/custom-print-studio";
 import { OlPastPapers } from "@/components/ol-past-papers";
+import { GradePapers } from "@/components/grade-papers";
 import { ColoringSheetLibrary } from "@/components/coloring-sheet-library";
 import { CvBuilder } from "@/components/cv-builder";
 import { DocumentLibrary } from "@/components/document-library";
@@ -39,10 +40,10 @@ import { useTrialAccess } from "@/components/trial-access";
 import { printCurrentPage } from "@/lib/print-page";
 import type { AssetCategory, DesignImage, EnglishFontFamily, ImageAsset, LanguageMode, MeasurementUnit, SinhalaFontFamily, StickerDesign, StickerTemplate, TextElement, TextInputMode } from "@/types";
 
-type Section = "Home" | "Create sticker" | "Templates" | "Recent designs" | "Saved designs" | "PNG assets" | "Past Paper Finder" | "Picture Colouring Library" | "CV Builder" | "Documents & Forms" | "A4 print studio" | "A4 Notice & Advertisement Templates" | "Sinhala Hodiya" | "Custom Print Studio" | "Settings";
+type Section = "Home" | "Create sticker" | "Templates" | "Recent designs" | "Saved designs" | "PNG assets" | "Past Paper Finder" | "Grade 6–9 Papers" | "Picture Colouring Library" | "CV Builder" | "Documents & Forms" | "A4 print studio" | "A4 Notice & Advertisement Templates" | "Sinhala Hodiya" | "Custom Print Studio" | "Settings";
 const navGroups: Array<{ label: string; items: Array<{ title: Section; icon: typeof Home }> }> = [
   { label: "Workspace", items: [{ title: "Home", icon: Home }, { title: "Create sticker", icon: Sparkles }, { title: "Templates", icon: LayoutGrid }] },
-  { label: "Your library", items: [{ title: "Recent designs", icon: RotateCcw }, { title: "Saved designs", icon: FolderHeart }, { title: "PNG assets", icon: FileImage }, { title: "Picture Colouring Library", icon: ImagePlus }, { title: "Past Paper Finder", icon: Files }, { title: "CV Builder", icon: FileUser }, { title: "Documents & Forms", icon: FileText }] },
+  { label: "Your library", items: [{ title: "Recent designs", icon: RotateCcw }, { title: "Saved designs", icon: FolderHeart }, { title: "PNG assets", icon: FileImage }, { title: "Picture Colouring Library", icon: ImagePlus }, { title: "Past Paper Finder", icon: Files }, { title: "Grade 6–9 Papers", icon: BookOpen }, { title: "CV Builder", icon: FileUser }, { title: "Documents & Forms", icon: FileText }] },
   { label: "Production", items: [{ title: "A4 print studio", icon: Printer }, { title: "A4 Notice & Advertisement Templates", icon: Megaphone }, { title: "Sinhala Hodiya", icon: BookOpen }, { title: "Custom Print Studio", icon: Shapes }] },
   { label: "Preferences", items: [{ title: "Settings", icon: Settings }] }
 ];
@@ -1043,6 +1044,9 @@ export function StickerStudio() {
     if (section === "Past Paper Finder") return isTrial
       ? <div className="empty-large"><div className="empty-illustration"><Files size={28}/></div><h3>Past papers require full access</h3><p>Past Paper Finder is not available in the free trial.</p></div>
       : <OlPastPapers/>;
+    if (section === "Grade 6–9 Papers") return isTrial
+      ? <div className="empty-large"><div className="empty-illustration"><Files size={28}/></div><h3>Grade papers require full access</h3><p>Grade 6–9 Papers are not available in the free trial.</p></div>
+      : <GradePapers/>;
     if (section === "Picture Colouring Library") return <ColoringSheetLibrary/>;
     if (section === "CV Builder") return <CvBuilder/>;
     if (section === "Documents & Forms") return <DocumentLibrary/>;
@@ -1414,12 +1418,15 @@ export function StickerStudio() {
 
   return <LocalizedUi><div className="studio-shell">
     <aside className={`sidebar no-print ${isMobileNavOpen ? "mobile-open" : ""}`}><div className="brand"><div className="brand-mark"><img src="/bookshop-icon.svg" alt=""/></div><div><b>PaperBloom</b><small>CREATIVE STUDIO</small></div><button className="mobile-close" data-trial-allow onClick={() => setMobileNavOpen(false)}><X size={18}/></button></div>
-      <nav className="sidebar-nav" aria-label="Main navigation">{navGroups.map(group => <div className="nav-group" key={group.label}><div className="sidebar-label">{group.label}</div>{group.items.map(({ title, icon: Icon }) => <button key={title} {...(title === "Past Paper Finder" && isTrial ? { "data-paid-feature": true, title: "Full access required" } : { "data-trial-allow": true })} className={`nav-item ${section === title ? "active" : ""}`} aria-current={section === title ? "page" : undefined} onClick={() => changeSection(title)}><Icon size={17} strokeWidth={1.8}/><span>{title}</span>{title === "Recent designs" && sortedRecent.length > 0 && <small>{sortedRecent.length}</small>}</button>)}</div>)}</nav>
+      <nav className="sidebar-nav" aria-label="Main navigation">{navGroups.map(group => <div className="nav-group" key={group.label}><div className="sidebar-label">{group.label}</div>{group.items.map(({ title, icon: Icon }) => {
+        const papersRequireFullAccess = title === "Past Paper Finder" || title === "Grade 6–9 Papers";
+        return <button key={title} {...(papersRequireFullAccess && isTrial ? { "data-paid-feature": true, title: "Full access required" } : { "data-trial-allow": true })} className={`nav-item ${section === title ? "active" : ""}`} aria-current={section === title ? "page" : undefined} onClick={() => changeSection(title)}><Icon size={17} strokeWidth={1.8}/><span>{title}</span>{title === "Recent designs" && sortedRecent.length > 0 && <small>{sortedRecent.length}</small>}</button>;
+      })}</div>)}</nav>
       <div className="sidebar-bottom"><div className="offline-badge"><span/> Works offline on this device</div><div className="profile-card"><div className="profile-avatar"><img src="/bookshop-icon.svg" alt="" aria-hidden="true"/></div><div><b>PaperBloom</b><small>CREATIVE STUDIO</small></div><Settings size={15}/></div><div className="version">PaperBloom Studio · 1.0</div></div>
     </aside>
     {isMobileNavOpen && <button aria-label="Close menu" data-trial-allow className="mobile-overlay" onClick={() => setMobileNavOpen(false)}/>}
     <main className="main-column"><header className="topbar no-print"><div className="flex min-w-0 items-center gap-3"><button className="secondary-button !px-3 !py-2" aria-label="Back to previous section" disabled={section === "Home" && sectionHistory.length === 0} onClick={goBack}><ArrowLeft size={14}/>Back</button><button className="menu-button" data-trial-allow aria-label="Open navigation" onClick={() => setMobileNavOpen(true)}><Menu size={19}/></button><div className="breadcrumb truncate">Your bookshop <span>/</span> <b>{section}</b></div></div><div className="flex items-center gap-3"><span className="saved-indicator"><span/> Everything stays on this device</span><ThemeToggle/><LanguageToggle/><button className="top-new" data-trial-allow onClick={() => { setDesign(null); setGeneratedBatch([]); changeSection("Create sticker"); }}><Plus size={15}/> New design</button></div></header>
-      <div className="main-content" data-trial-allow={isTrial && section === "Create sticker" ? "" : undefined}>{isTrial && section === "Create sticker" && <p className="mb-4 rounded-xl border border-[#e5dced] bg-[#fbf9ff] px-4 py-3 text-xs leading-5 text-[#66558b]">Free trial: create and preview name stickers. Printing and Past Paper Finder require full access.</p>}{content()}<DesktopUpdateManager showSettings={section === "Settings"} showPrompt={false}/></div>
+      <div className="main-content" data-trial-allow={isTrial && section === "Create sticker" ? "" : undefined}>{isTrial && section === "Create sticker" && <p className="mb-4 rounded-xl border border-[#e5dced] bg-[#fbf9ff] px-4 py-3 text-xs leading-5 text-[#66558b]">Free trial: create and preview name stickers. Printing and both paper sections require full access.</p>}{content()}<DesktopUpdateManager showSettings={section === "Settings"} showPrompt={false}/></div>
       <div className="app-toast-stack no-print">
         {error && <AppToast key={`error-${error}`} variant="error" message={error} onClose={() => setError("")}/>}
         {message && <AppToast key={`success-${message}`} variant="success" message={message} onClose={() => setMessage("")}/>}

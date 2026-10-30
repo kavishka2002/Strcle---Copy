@@ -69,6 +69,8 @@
       "electron/**/*",
       ".next-desktop/littlepaper.ico",
       ".next-desktop/standalone/**/*",
+      "src/data/ol-papers-manifest.json",
+      "src/data/grade-papers-manifest.json",
       "package.json"
     ],
     "asar": false,

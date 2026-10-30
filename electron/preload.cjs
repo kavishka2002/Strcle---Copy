@@ -11,6 +11,15 @@ contextBridge.exposeInMainWorld("littlePaperDesktop", Object.freeze({
   downloadUpdate: () => ipcRenderer.invoke("download-update"),
   installUpdate: () => ipcRenderer.invoke("install-update"),
   dismissUpdate: version => ipcRenderer.invoke("dismiss-update", version),
+  downloadDrivePdf: request => ipcRenderer.invoke("download-drive-pdf", request),
+  onDrivePdfDownloadProgress: callback => {
+    if (typeof callback !== "function") {
+      throw new TypeError("A Drive PDF download progress listener is required.");
+    }
+    const listener = (_event, progress) => callback(progress);
+    ipcRenderer.on("drive-pdf-download-progress", listener);
+    return () => ipcRenderer.removeListener("drive-pdf-download-progress", listener);
+  },
   onUpdateStatus: callback => {
     if (typeof callback !== "function") {
       throw new TypeError("An update status listener is required.");

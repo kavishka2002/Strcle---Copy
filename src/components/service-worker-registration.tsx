@@ -16,6 +16,13 @@ export interface DesktopUpdateStatus {
   notify?: boolean;
 }
 
+export interface DesktopDrivePdfDownloadProgress {
+  fileId: string;
+  transferred: number;
+  total?: number;
+  percent?: number;
+}
+
 declare global {
   interface Window {
     littlePaperDesktop?: Readonly<{
@@ -29,6 +36,8 @@ declare global {
       downloadUpdate?: () => Promise<{ status: "downloaded" }>;
       installUpdate?: () => Promise<{ status: "installing" }>;
       dismissUpdate?: (version: string) => Promise<{ status: "dismissed" }>;
+      downloadDrivePdf?: (request: { fileId: string; fileName: string }) => Promise<{ status: "opened"; source: "cache" | "download"; size: number; sha256: string }>;
+      onDrivePdfDownloadProgress?: (callback: (progress: DesktopDrivePdfDownloadProgress) => void) => () => void;
       onUpdateStatus?: (callback: (status: DesktopUpdateStatus) => void) => () => void;
     }>;
   }

@@ -5,6 +5,9 @@ const { spawn } = require("node:child_process");
 const { createServer } = require("node:net");
 const { access, mkdir, readFile, writeFile } = require("node:fs/promises");
 const path = require("node:path");
+const { downloadDrivePdf } = require("./drive-pdf-download.cjs");
+const { papers: OL_PAPER_MANIFEST } = require("../src/data/ol-papers-manifest.json");
+const { papers: GRADE_PAPER_MANIFEST } = require("../src/data/grade-papers-manifest.json");
 
 const SERVER_HOST = "127.0.0.1";
 const SERVER_PORT_FILE = "next-server-port";
@@ -12,6 +15,12 @@ const UPDATE_PREFERENCES_FILE = "update-preferences.json";
 const STARTUP_TIMEOUT_MS = 60_000;
 const STARTUP_POLL_MS = 250;
 const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const DRIVE_PAPERS_BY_FILE_ID = new Map([
+  ...OL_PAPER_MANIFEST.map(paper => [paper.driveFileId, { ...paper, cacheFolder: "OL" }]),
+  ...GRADE_PAPER_MANIFEST
+    .filter(paper => paper.availability !== "incomplete")
+    .map(paper => [paper.driveFileId, { ...paper, cacheFolder: `Grade${String(paper.grade).padStart(2, "0")}` }])
+]);
 
 app.setName("LittlePaper");
 app.setAppUserModelId("lk.littlepaper.desktop");
@@ -459,6 +468,30 @@ if (!app.requestSingleInstanceLock()) {
       throw new Error("The selected PDF is invalid or exceeds the 100 MB print limit.");
     }
     return openPdfPreview(Buffer.from(pdfData));
+  });
+
+  ipcMain.handle("download-drive-pdf", async (event, request = {}) => {
+    assertMainWindowSender(event);
+    const paper = request && typeof request === "object"
+      ? DRIVE_PAPERS_BY_FILE_ID.get(request.fileId)
+      : undefined;
+    if (!paper || paper.originalFileName !== request.fileName) {
+      throw new Error("This Drive PDF is not present in a verified paper catalogue.");
+    }
+
+    const result = await downloadDrivePdf({
+      fileId: paper.driveFileId,
+      fileName: paper.originalFileName,
+      cacheDirectory: path.join(app.getPath("userData"), "PaperBloom", "Papers", paper.cacheFolder),
+      onProgress: progress => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("drive-pdf-download-progress", progress);
+        }
+      }
+    });
+    const openError = await shell.openPath(result.filePath);
+    if (openError) throw new Error(`The PDF was downloaded, but could not be opened: ${openError}`);
+    return { status: "opened", source: result.source, size: result.size, sha256: result.sha256 };
   });
 
   ipcMain.handle("get-update-info", event => {

@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 const nextCli = require.resolve("next/dist/bin/next");
+const desktopOutputDirectory = process.env.LITTLEPAPER_DESKTOP_DIST_DIR || ".next-desktop";
 
 function run(command, args, env = process.env) {
   return new Promise((resolve, reject) => {
@@ -19,11 +20,13 @@ function run(command, args, env = process.env) {
 }
 
 try {
-  await run(process.execPath, [nextCli, "build"], {
+  const desktopBuildEnvironment = {
     ...process.env,
-    LITTLEPAPER_DESKTOP_BUILD: "1"
-  });
-  await run(process.execPath, [path.join(projectRoot, "scripts", "prepare-desktop.mjs")]);
+    LITTLEPAPER_DESKTOP_BUILD: "1",
+    LITTLEPAPER_DESKTOP_DIST_DIR: desktopOutputDirectory
+  };
+  await run(process.execPath, [nextCli, "build"], desktopBuildEnvironment);
+  await run(process.execPath, [path.join(projectRoot, "scripts", "prepare-desktop.mjs")], desktopBuildEnvironment);
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   process.exitCode = 1;

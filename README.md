@@ -1,6 +1,6 @@
 # PaperBloom Stationery & Creative Studio
 
-A local-first Next.js app for creating Sri Lankan school name stickers and notebook cover labels. Sign-in accounts and each bookshop's designs, templates, and uploaded images stay in separate local browser storage; no cloud service is used.
+A local-first Next.js app for creating Sri Lankan school name stickers and notebook cover labels. Sign-in accounts and each bookshop's designs, templates, and uploaded images stay in separate local browser storage. O/L past papers use a verified public Google Drive catalog and download on demand.
 
 ## Start on Windows
 
@@ -32,9 +32,19 @@ npm install
 npm run desktop:dev
 ```
 
-The first desktop build stages the complete `public` folder (about 965 MB in this copy) alongside Next.js's standalone server so the existing APIs that scan `public` continue to work. This requires additional build disk space and means the initial Windows installer will be large. The installer includes the assets once; do not remove PDFs or artwork to reduce its size unless the affected features are intentionally changed and tested.
+The first desktop build stages the `public` assets alongside Next.js's standalone server so existing features continue to work. O/L PDFs under `public/papers/<year> ol/` are excluded from the desktop package; other PDFs and public assets are retained.
 
-Local papers, artwork, fonts, and saved work are available without internet after installation. Searching the Department of Examinations catalog and downloading newly published papers, as well as opening official external links, require internet access. The service worker is not registered in the Electron window to avoid caching stale application responses; the website's browser behavior is unchanged.
+Artwork, fonts, other bundled papers, and saved work remain available without internet after installation. O/L papers download from Google Drive only when opened and are cached at `app.getPath("userData")/PaperBloom/Papers/OL`; cached papers remain available offline and across application updates. Downloading a paper for the first time and opening official external links require internet access. The service worker is not registered in the Electron window to avoid caching stale application responses; the website's browser behavior is unchanged.
+
+Grade 6–9 PDFs have their own **Grade 6–9 Papers** section. Its 80 Drive records are cached per grade under `app.getPath("userData")/PaperBloom/Papers/Grade06` through `Grade09`. One source PDF in the Grade 07 folder is only 17 bytes (a PDF header without a document), so it appears as incomplete and cannot be opened until the Drive source is repaired.
+
+## Updating the O/L paper catalog
+
+The verified 2015–2025 catalog contains 357 PDFs and is maintained in [`src/data/ol-papers-manifest.json`](./src/data/ol-papers-manifest.json). Each entry records the original Drive filename, its actual Drive file ID, year, subject, language, display name, and PDF type. The desktop main process accepts downloads only for IDs in this manifest; no API key or customer-side catalog listing is used.
+
+To publish another paper, add the PDF to its year folder in the shared Drive, copy the exact file ID from its Drive share URL, then add a manifest entry with that ID and exact filename. Use a unique `id` in the form `ol-<drive-file-id>`, preserve the Drive folder name, and set the subject, language, syllabus, display name, and `application/pdf` type. Update the manifest year range and the expected per-year count in `src/lib/ol-papers.test.ts`, then run `npm test`, `npm run typecheck`, and `npm run lint`. Verify the new ID with a real download before publishing; do not infer IDs or generate the permanent catalog by scraping Drive HTML.
+
+Grade 6–9 records are maintained separately in [`src/data/grade-papers-manifest.json`](./src/data/grade-papers-manifest.json). Preserve the source filename and Drive ID, set the grade folder metadata and subject/category, then add a manifest test and verify the direct download. Do not mark an incomplete source PDF as available.
 
 The **Sinhala Hodiya** section is available from the Production navigation. It includes the Sinhala vowels, consonants, and vowel-sign combinations, with optional Sinhala numerals, English letters, and English numbers. One font-size and tile-shape setting applies uniformly to every worksheet letter. Choose individual characters with their checkboxes and select **Print selected** to print only those letters (including just one), or choose **Print full Sinhala Hodiya** to print all Sinhala vowel, consonant, and combination sections without English or numerals. Each letter can also have its own bundled Unicode font and text/tile colours. Adjust the A4 grid, tile size, and spacing, then print using the desktop PDF preview.
 
