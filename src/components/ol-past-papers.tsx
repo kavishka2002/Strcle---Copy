@@ -90,6 +90,21 @@ export function OlPastPapers() {
     setSearch("");
   };
 
+  const openPaperInBrowser = (paper: OlPaper) => {
+    if (!paper.url) return;
+    const popup = window.open(paper.url, "_blank", "noopener,noreferrer");
+    if (popup) popup.opener = null;
+  };
+
+  const openPaper = async (paper: OlPaper) => {
+    const desktop = window.littlePaperDesktop;
+    if (paper.driveFileId && desktop?.downloadDrivePdf) {
+      await openDrivePaper(paper);
+      return;
+    }
+    openPaperInBrowser(paper);
+  };
+
   const openDrivePaper = async (paper: OlPaper) => {
     const desktop = window.littlePaperDesktop;
     if (!paper.driveFileId) return;
@@ -112,6 +127,7 @@ export function OlPastPapers() {
         message: "Could not download this paper. An internet connection is required the first time; downloaded papers work offline. / මෙම ප්‍රශ්න පත්‍රය බාගත කළ නොහැක. පළමු වරට බාගත කිරීමට අන්තර්ජාලය අවශ්‍යයි; කලින් බාගත කළ පත්‍ර නොබැඳිව විවෘත කළ හැක.",
         error: true
       });
+      openPaperInBrowser(paper);
     } finally {
       setDriveDownload(current => current?.paperId === paper.id ? null : current);
     }
@@ -199,7 +215,20 @@ export function OlPastPapers() {
                 </div>
                 <div className="ol-past-papers-grid">
                   {yearPapers.map(paper => (
-                    <article className="ol-past-papers-card" key={paper.id}>
+                    <article
+                      className="ol-past-papers-card"
+                      key={paper.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Open ${paper.year} ${paper.subject} ${paper.medium} PDF`}
+                      onClick={() => { void openPaper(paper); }}
+                      onKeyDown={event => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          void openPaper(paper);
+                        }
+                      }}
+                    >
                       <span className="ol-past-papers-file-icon" aria-hidden="true"><FileText size={17}/></span>
                       <div className="ol-past-papers-card-copy">
                         <h4>{paper.subject}</h4>
@@ -215,9 +244,12 @@ export function OlPastPapers() {
                         rel="noopener noreferrer"
                         aria-label={`Open ${paper.year} ${paper.subject}, ${paper.medium} PDF in a new tab`}
                         onClick={event => {
-                          if (!paper.driveFileId || !window.littlePaperDesktop?.isDesktop) return;
-                          event.preventDefault();
-                          void openDrivePaper(paper);
+                          event.stopPropagation();
+                          if (paper.driveFileId && window.littlePaperDesktop?.downloadDrivePdf) {
+                            event.preventDefault();
+                            void openDrivePaper(paper);
+                            return;
+                          }
                         }}
                       >
                         Open PDF <ArrowUpRight size={14}/>
