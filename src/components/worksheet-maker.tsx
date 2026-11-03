@@ -10,13 +10,15 @@ import { db } from "@/lib/database";
 import { printCurrentPage, printCurrentPageWithDialog } from "@/lib/print-page";
 import { englishFonts, sinhalaFonts } from "@/lib/font-catalog";
 import {
-  generateWorksheetExercises, worksheetCategories, worksheetTemplates,
+  duplicateWorksheetDraft, generateWorksheetExercises, getWorksheetTemplate, validateWorksheetDraft,
+  worksheetCategories, worksheetTemplates,
   type WorksheetActivity, type WorksheetDraft, type WorksheetExercise,
   type WorksheetOrientation, type WorksheetTemplate
 } from "@/lib/worksheets";
 
 const categoryIcons = [BookOpen, BookOpen, Grid2X2, Lightbulb, Palette, Shapes, Pencil, ListChecks, GraduationCap];
 const categoryColors = ["#fff0ed", "#edf3ff", "#fff5db", "#f2edff", "#e8f6ea", "#e8f5f4", "#fff0f4", "#edf2ff", "#fff1e0"];
+const categorySinhalaNames = ["සිංහල හෝඩිය", "ඉංග්‍රීසි හෝඩිය", "අංක 1–100", "ගණිතය", "පාට කිරීම", "හැඩතල සහ පින්තූර", "අත් අකුරු පුහුණුව", "ගැළපීමේ ක්‍රියාකාරකම්", "1–5 ශ්‍රේණි ක්‍රියාකාරකම්"];
 const englishActivities: WorksheetActivity[] = [
   "Trace letters", "Identify letters", "Letter pictures", "Trace numbers", "Number recognition", "Counting",
   "Missing numbers", "Before and after", "Addition", "Subtraction", "Multiplication", "Division",
@@ -42,28 +44,24 @@ const newId = () => crypto.randomUUID();
 function makeDraft(template: WorksheetTemplate): WorksheetDraft {
   const timestamp = Date.now();
   const draft: WorksheetDraft = {
-    id: newId(), title: template.title, category: template.category, activity: template.activity,
+    id: newId(), title: template.language === "Sinhala" ? template.titleSinhala : template.title,
+    sourceTemplateId: template.id, category: template.category, activity: template.activity,
     language: template.language, grade: template.grade, difficulty: template.difficulty,
     orientation: "portrait", fontFamily: template.language === "Sinhala" ? defaultSinhalaFont : defaultFont,
     borderStyle: "solid", letterCase: "uppercase", coloringCategory: "Animals",
     fontSize: 20, lineSpacing: 1.6, textColor: "#26394a", background: "#ffffff", borderColor: "#77a98f",
-    schoolName: "", studentName: true, gradeDate: true, instructions: template.instructions,
+    schoolName: "", studentName: true, gradeDate: true,
+    instructions: template.language === "Sinhala" ? template.instructionsSinhala : template.instructions,
     includeAnswerKey: false, startNumber: 1, endNumber: template.activity === "Trace numbers" ? 20 : 10,
     selectedLetters: "", shuffleMatches: false, exercises: [], createdAt: timestamp, updatedAt: timestamp
   };
-  draft.exercises = generateWorksheetExercises(draft, getInitialCount(template));
+  draft.exercises = generateWorksheetExercises(draft, template.exerciseCount);
   return draft;
 }
 
-function getInitialCount(template: WorksheetTemplate): number {
-  if (template.id === "si-vowels") return 18;
-  if (template.id === "en-uppercase") return 26;
-  return template.activity === "Trace numbers" ? 20 : 12;
-}
-
 function duplicateWorksheet(item: WorksheetDraft): WorksheetDraft {
-  const timestamp = Date.now();
-  return { ...item, id: newId(), title: `${item.title} copy`, createdAt: timestamp, updatedAt: timestamp };
+  const copy = duplicateWorksheetDraft(item, newId());
+  return { ...copy, title: `${copy.title} copy` };
 }
 
 function toPages<T>(items: T[], pageSize: number): T[][] {
@@ -73,6 +71,12 @@ function toPages<T>(items: T[], pageSize: number): T[][] {
 }
 
 function Picture({ name }: { name: string }) {
+  if (name.startsWith("color-")) {
+    const illustration = name.replace("color-", "");
+    return <svg viewBox="0 0 220 170" role="img" aria-label={illustration} className="worksheet-picture worksheet-color-illustration">
+      <use href={`/worksheets/coloring-library.svg#${illustration}`}/>
+    </svg>;
+  }
   const shape = name.toLowerCase();
   const common = { fill: "none", stroke: "currentColor", strokeWidth: 3, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   return <svg viewBox="0 0 100 80" aria-hidden="true" className="worksheet-picture">
@@ -115,29 +119,33 @@ function WorksheetPage({ draft, exercises, pageNumber, answerSheet = false }: {
 }) {
   const siFont = sinhalaFonts.some(font => font.family === draft.fontFamily) ? draft.fontFamily : defaultSinhalaFont;
   const fontFamily = `"${draft.fontFamily}", "${siFont}", "Noto Sans Sinhala", sans-serif`;
+  const isSinhala = draft.language === "Sinhala";
   return <article className={`kids-worksheet-page ${draft.orientation === "landscape" ? "landscape" : "portrait"}`}
     style={{ fontFamily, color: draft.textColor, backgroundColor: draft.background, borderColor: draft.borderColor, borderStyle: draft.borderStyle } as CSSProperties}>
     <header className="kids-worksheet-header">
       {draft.schoolName && <div className="kids-school-name">{draft.schoolName}</div>}
-      <h2>{answerSheet ? `${draft.title} · Answer key` : draft.title}</h2>
+      <h2>{answerSheet ? `${draft.title} · ${isSinhala ? "පිළිතුරු" : "Answer key"}` : draft.title}</h2>
       <div className="kids-worksheet-meta">
-        {draft.studentName && <span>Name: <i/></span>}
-        {draft.gradeDate && <><span>Grade {draft.grade}</span><span>Date: <i/></span></>}
+        {draft.studentName && <span>{isSinhala ? "නම:" : "Name:"} <i/></span>}
+        {draft.gradeDate && <><span>{isSinhala ? `ශ්‍රේණිය ${draft.grade}` : `Grade ${draft.grade}`}</span><span>{isSinhala ? "දිනය:" : "Date:"} <i/></span></>}
       </div>
       {!answerSheet && <p>{draft.instructions}</p>}
     </header>
-    <div className={`kids-exercise-list ${answerSheet ? "answer-key" : ""}`} style={{ fontSize: `${Math.min(draft.fontSize, 30)}px`, lineHeight: draft.lineSpacing }}>
+    <div className={`kids-exercise-list ${answerSheet ? "answer-key" : ""}`} style={{ fontSize: `${draft.fontSize}px`, lineHeight: draft.lineSpacing }}>
       {exercises.map((item, index) => answerSheet
-        ? <div className="kids-answer-row" key={item.id}><span>{index + 1}.</span><b>{item.answer || "________________"}</b></div>
+        ? <div className="kids-answer-row" key={item.id}><span>{index + 1}.</span><b>{(isSinhala ? item.answerSinhala ?? item.answer : item.answer) || "________________"}</b></div>
         : <div className={`kids-exercise ${item.kind === "trace" ? "trace" : ""} ${item.kind === "color" ? "color" : ""}`} key={item.id}>
           <span className="kids-exercise-number">{pageNumber * (draft.orientation === "landscape" ? 10 : 8) + index + 1}.</span>
           <div className="kids-exercise-body">
-            <div className="kids-exercise-prompt">{item.prompt}</div>
+            <div className="kids-exercise-prompt">{isSinhala ? item.promptSinhala ?? item.prompt : item.prompt}</div>
             {item.picture && item.kind !== "color" && <Picture name={item.picture}/>}
+            {item.kind === "match" && item.choices?.length
+              ? <div className="kids-match-choices">{(isSinhala ? item.choicesSinhala ?? item.choices : item.choices).join(" · ")}</div>
+              : null}
             {item.kind === "trace" && <div className="kids-writing-lines"><i/><i/></div>}
             {item.kind === "write" && <div className="kids-writing-lines"><i/><i/></div>}
             {item.kind === "match" && <div className="kids-match-line"/>}
-            {item.kind === "color" && <div className="kids-coloring-space"><Picture name={item.picture ?? "flower"}/></div>}
+            {item.kind === "color" && <div className="kids-coloring-space"><Picture name={item.picture ?? "color-flowers"}/></div>}
           </div>
         </div>)}
     </div>
@@ -148,9 +156,11 @@ function WorksheetPage({ draft, exercises, pageNumber, answerSheet = false }: {
 export function WorksheetMaker() {
   const [category, setCategory] = useState<WorksheetDraft["category"]>(worksheetCategories[0]);
   const [draft, setDraft] = useState<WorksheetDraft | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<WorksheetTemplate | null>(null);
   const [saved, setSaved] = useState<WorksheetDraft[]>([]);
   const [selectedSaved, setSelectedSaved] = useState<string[]>([]);
   const [batchPrint, setBatchPrint] = useState(false);
+  const [templateSearch, setTemplateSearch] = useState("");
   const [templateGrade, setTemplateGrade] = useState<number | "all">("all");
   const [templateLanguage, setTemplateLanguage] = useState<WorksheetDraft["language"] | "all">("all");
   const [templateDifficulty, setTemplateDifficulty] = useState<WorksheetDraft["difficulty"] | "all">("all");
@@ -173,11 +183,13 @@ export function WorksheetMaker() {
 
   const categoryTemplates = useMemo(() => worksheetTemplates.filter(template =>
     template.category === category &&
+    `${template.title} ${template.titleSinhala} ${template.description} ${template.descriptionSinhala}`.toLocaleLowerCase().includes(templateSearch.trim().toLocaleLowerCase()) &&
     (templateGrade === "all" || template.grade === templateGrade) &&
-    (templateLanguage === "all" || template.language === templateLanguage) &&
+    (templateLanguage === "all" || template.languages.includes(templateLanguage)) &&
     (templateDifficulty === "all" || template.difficulty === templateDifficulty) &&
     (templateActivity === "all" || template.activity === templateActivity)
-  ), [category, templateActivity, templateDifficulty, templateGrade, templateLanguage]);
+  ), [category, templateActivity, templateDifficulty, templateGrade, templateLanguage, templateSearch]);
+  const previewDraft = useMemo(() => previewTemplate ? makeDraft(previewTemplate) : null, [previewTemplate]);
   const usableActivities = activitiesByCategory[draft?.category ?? category];
   const exercisePages = draft ? toPages(draft.exercises, draft.orientation === "landscape" ? 10 : 8) : [];
   const pages = draft ? [
@@ -196,15 +208,27 @@ export function WorksheetMaker() {
   const createFromTemplate = (template: WorksheetTemplate) => {
     setCategory(template.category);
     setDraft(makeDraft(template));
+    setPreviewTemplate(null);
     setSelectedPage(0);
     setStatus("");
     setError("");
+    requestAnimationFrame(() => document.getElementById("kids-editor")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
 
   const regenerate = (patch: Partial<WorksheetDraft> = {}, count = draft?.exercises.length ?? 12) => {
     if (!draft) return;
     try {
       const next = { ...draft, ...patch };
+      if (patch.activity) next.sourceTemplateId = undefined;
+      if (patch.language && draft.sourceTemplateId) {
+        const source = getWorksheetTemplate(draft.sourceTemplateId);
+        if (source) {
+          const previousTitle = draft.language === "Sinhala" ? source.titleSinhala : source.title;
+          const previousInstructions = draft.language === "Sinhala" ? source.instructionsSinhala : source.instructions;
+          if (draft.title === previousTitle) next.title = next.language === "Sinhala" ? source.titleSinhala : source.title;
+          if (draft.instructions === previousInstructions) next.instructions = next.language === "Sinhala" ? source.instructionsSinhala : source.instructions;
+        }
+      }
       next.exercises = generateWorksheetExercises(next, count);
       next.updatedAt = Date.now();
       setDraft(next);
@@ -218,6 +242,12 @@ export function WorksheetMaker() {
 
   const saveDraft = async () => {
     if (!draft) return;
+    const validationErrors = validateWorksheetDraft(draft);
+    if (validationErrors.length) {
+      setError(validationErrors.join(" "));
+      setStatus("");
+      return;
+    }
     try {
       const next = { ...draft, updatedAt: Date.now() };
       await db.putWorksheetDraft(next);
@@ -299,6 +329,17 @@ export function WorksheetMaker() {
     patchDraft({ exercises: draft.exercises.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) });
   };
 
+  const restoreDefault = () => {
+    if (!draft?.sourceTemplateId) return;
+    const template = getWorksheetTemplate(draft.sourceTemplateId);
+    if (!template) {
+      setError("The original default worksheet is not available.");
+      return;
+    }
+    createFromTemplate(template);
+    setStatus("The original default template has been restored. Your saved copy was not changed.");
+  };
+
   const setOrientation = (orientation: WorksheetOrientation) => {
     if (!draft) return;
     patchDraft({ orientation });
@@ -326,7 +367,7 @@ export function WorksheetMaker() {
       {worksheetCategories.map((name, index) => {
         const Icon = categoryIcons[index];
         return <button key={name} onClick={() => setCategory(name)} className={`kids-category-card ${category === name ? "selected" : ""}`}>
-          <span style={{ backgroundColor: categoryColors[index] }}><Icon size={20}/></span><b>{name}</b><small>{worksheetTemplates.filter(template => template.category === name).length} starter template{worksheetTemplates.filter(template => template.category === name).length === 1 ? "" : "s"}</small>
+          <span style={{ backgroundColor: categoryColors[index] }}><Icon size={20}/></span><b>{name}<br/><span className="kids-category-sinhala">{categorySinhalaNames[index]}</span></b><small>{worksheetTemplates.filter(template => template.category === name).length} ready-made worksheets</small>
           <ArrowRight size={15} className="kids-category-arrow"/>
         </button>;
       })}
@@ -335,23 +376,39 @@ export function WorksheetMaker() {
     <div className="kids-section-heading" id="kids-templates"><div><span className="kids-eyebrow">READY WHEN YOU ARE</span><h2>Template library</h2><p>{category} · Editable starters, not an official curriculum claim.</p></div>
       <div className="kids-template-count"><Flower2 size={15}/>{categoryTemplates.length} templates</div>
     </div>
-    <div className="kids-template-grid">
-      {categoryTemplates.map(template => <button key={template.id} className="kids-template-card" onClick={() => createFromTemplate(template)}>
-        <div className="kids-template-preview"><span>{template.icon}</span><i/><i/><i/></div>
-        <b>{template.title}</b><small>{template.description}</small><span className="kids-template-cta">Customize worksheet <ArrowRight size={13}/></span>
-      </button>)}
-      {!categoryTemplates.length && <div className="kids-empty-card">No starter template in this collection yet. Select another category, or create a worksheet from the editor below.</div>}
-    </div>
     <div className="kids-template-filters">
+      <label>Category<select value={category} onChange={event => setCategory(event.target.value as WorksheetDraft["category"])}>{worksheetCategories.map(item => <option key={item}>{item}</option>)}</select></label>
+      <label className="kids-template-search">Search<input type="search" value={templateSearch} onChange={event => setTemplateSearch(event.target.value)} placeholder="Search in Sinhala or English"/></label>
       <label>Grade<select value={templateGrade} onChange={event => setTemplateGrade(event.target.value === "all" ? "all" : Number(event.target.value))}><option value="all">All grades</option>{[1, 2, 3, 4, 5].map(grade => <option key={grade} value={grade}>Grade {grade}</option>)}</select></label>
       <label>Language<select value={templateLanguage} onChange={event => setTemplateLanguage(event.target.value as WorksheetDraft["language"] | "all")}><option value="all">All languages</option><option>English</option><option>Sinhala</option></select></label>
       <label>Difficulty<select value={templateDifficulty} onChange={event => setTemplateDifficulty(event.target.value as WorksheetDraft["difficulty"] | "all")}><option value="all">All levels</option><option>Easy</option><option>Medium</option><option>Advanced</option></select></label>
       <label>Worksheet type<select value={templateActivity} onChange={event => setTemplateActivity(event.target.value as WorksheetActivity | "all")}><option value="all">All types</option>{[...new Set(worksheetTemplates.map(template => template.activity))].map(activity => <option key={activity}>{activity}</option>)}</select></label>
     </div>
+    <div className="kids-template-grid">
+      {categoryTemplates.map(template => <article key={template.id} className="kids-template-card">
+        <div className="kids-template-preview" aria-hidden="true"><span>{template.icon}</span><b>{template.titleSinhala}</b><i/><i/></div>
+        <b>{template.title}</b><small>{template.titleSinhala}<br/>{template.description} · {template.grade ? `Grade ${template.grade}` : "All grades"} · English &amp; Sinhala · {Math.max(1, Math.ceil(template.exerciseCount / 8))} page{template.exerciseCount > 8 ? "s" : ""}</small>
+        <div className="kids-template-card-actions">
+          <button type="button" className="kids-card-preview" onClick={() => setPreviewTemplate(template)}>Preview</button>
+          <button type="button" className="kids-card-use" onClick={() => createFromTemplate(template)}>Use Template</button>
+          <button type="button" className="kids-card-customize" onClick={() => createFromTemplate(template)}>Customize</button>
+        </div>
+      </article>)}
+      {!categoryTemplates.length && <div className="kids-empty-card">No worksheets match these filters. Try another category, language, or search term.</div>}
+    </div>
 
-    {draft && <div className="kids-editor">
+    {previewTemplate && previewDraft && <div className="kids-template-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setPreviewTemplate(null); }}>
+      <section className="kids-template-modal" role="dialog" aria-modal="true" aria-labelledby="kids-template-preview-title">
+        <div className="kids-template-modal-heading"><div><span className="kids-eyebrow">READY-TO-PRINT WORKSHEET</span><h2 id="kids-template-preview-title">{previewTemplate.title} · {previewTemplate.titleSinhala}</h2><p>{previewTemplate.description} · {previewTemplate.exerciseCount} activities · A4</p></div><button type="button" aria-label="Close preview" onClick={() => setPreviewTemplate(null)}>×</button></div>
+        <div className="kids-template-modal-sheet"><WorksheetPage draft={previewDraft} exercises={toPages(previewDraft.exercises, previewDraft.orientation === "landscape" ? 10 : 8)[0] ?? []} pageNumber={0}/></div>
+        <div className="kids-template-modal-actions"><button type="button" className="kids-secondary" onClick={() => setPreviewTemplate(null)}>Close</button><button type="button" className="kids-primary" onClick={() => createFromTemplate(previewTemplate)}>Use this worksheet</button></div>
+      </section>
+    </div>}
+
+    {draft && <div className="kids-editor" id="kids-editor">
       <div className="kids-section-heading"><div><span className="kids-eyebrow">MAKE IT YOURS</span><h2>Worksheet editor</h2><p>Changes appear in your live A4 preview.</p></div><div className="kids-editor-actions">
         <button className="kids-secondary" onClick={() => void saveDraft()}><Save size={15}/> Save</button>
+        {draft.sourceTemplateId && <button className="kids-secondary" onClick={restoreDefault}>Restore default</button>}
         <button className="kids-secondary" onClick={downloadCopy}><Download size={15}/> Backup</button>
       </div></div>
       <div className="kids-workspace">
@@ -398,8 +455,8 @@ export function WorksheetMaker() {
           </div>
           <div className="kids-exercise-editor"><div className="kids-exercise-editor-heading"><b>Edit questions</b><button type="button" onClick={() => patchDraft({ exercises: [...draft.exercises, { id: newId(), prompt: "Write your question here.", answer: "", kind: "write" }] })}><Sparkles size={13}/> Add question</button></div>
             {draft.exercises.map((item, index) => <div className="kids-question-edit" key={item.id}>
-              <span>{index + 1}</span><input aria-label={`Question ${index + 1}`} value={item.prompt} onChange={event => updateExercise(index, { prompt: event.target.value, answer: "" })}/>
-              <input aria-label={`Answer ${index + 1}`} placeholder="Answer" value={item.answer} onChange={event => updateExercise(index, { answer: event.target.value })}/>
+              <span>{index + 1}</span><input aria-label={`Question ${index + 1}`} value={draft.language === "Sinhala" ? item.promptSinhala ?? item.prompt : item.prompt} onChange={event => updateExercise(index, { prompt: event.target.value, promptSinhala: event.target.value, answer: "", answerSinhala: "" })}/>
+              <input aria-label={`Answer ${index + 1}`} placeholder="Answer" value={draft.language === "Sinhala" ? item.answerSinhala ?? item.answer : item.answer} onChange={event => updateExercise(index, { answer: event.target.value, answerSinhala: event.target.value })}/>
               <select aria-label={`Illustration for question ${index + 1}`} value={item.picture ?? ""} onChange={event => updateExercise(index, { picture: event.target.value || undefined })}><option value="">No picture</option>{["apple", "animal", "bird", "book", "carrot", "flower", "fruit", "vehicle", "tree", "pencil", "circle", "square", "triangle", "rectangle", "oval", "diamond", "star"].map(picture => <option key={picture}>{picture}</option>)}</select>
               <span className="kids-reorder-buttons"><button type="button" aria-label={`Move question ${index + 1} up`} disabled={index === 0} onClick={() => { const exercises = [...draft.exercises]; [exercises[index - 1], exercises[index]] = [exercises[index], exercises[index - 1]]; patchDraft({ exercises }); }}><ChevronUp size={12}/></button><button type="button" aria-label={`Move question ${index + 1} down`} disabled={index === draft.exercises.length - 1} onClick={() => { const exercises = [...draft.exercises]; [exercises[index], exercises[index + 1]] = [exercises[index + 1], exercises[index]]; patchDraft({ exercises }); }}><ChevronDown size={12}/></button></span>
               <button type="button" aria-label={`Remove question ${index + 1}`} onClick={() => patchDraft({ exercises: draft.exercises.filter((_, itemIndex) => itemIndex !== index) })}><Trash2 size={14}/></button>

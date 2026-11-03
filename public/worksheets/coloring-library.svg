@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="cat" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M56 77 48 30l39 23q23-9 46 0l39-23-8 48q13 18 7 42-9 34-60 34T51 119q-7-23 5-42Z"/>
+      <path d="M78 92h1m61 0h1m-47 20q17 15 34 0m-16-5 5 5-5 5m-49 8-20 8m124-8 20 8M43 69l19 8m115-8-19 8"/>
+    </g>
+  </symbol>
+  <symbol id="dog" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M61 68 45 39q-7-13 8-10l35 19q22-9 44 0l35-19q15-3 8 10l-16 29q15 18 9 44-8 37-57 37t-58-37q-6-25 8-44Z"/>
+      <path d="M81 91h1m56 0h1m-43 20q14 11 28 0m-14-10v10m-21 27 21 9 21-9"/>
+    </g>
+  </symbol>
+  <symbol id="elephant" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M38 84q0-44 66-44h26q48 0 48 49v37h-26v-23h-73v23H54v-35q-16-2-16-22Z"/>
+      <path d="M56 64Q20 42 23 82q2 25 31 27m108-43q36-22 39 16-2 23-25 28M85 76h2m61 0h2m-43 10q8 6 16 0"/>
+      <path d="M45 129v15m108-15v15"/>
+    </g>
+  </symbol>
+  <symbol id="lion" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M110 20 126 36l22-8 9 22 22 9-7 23 16 17-17 17 4 24-24 6-13 19-22-9-21 10-13-19-24-5 4-24-17-17 16-18-7-23 22-9 9-22 22 8Z"/>
+      <path d="M71 78q0-30 39-30t39 30q0 34-39 34T71 78Zm-17 9 20 5m92-5-20 5m-64-14h2m52 0h2m-37 12q9 8 18 0m-9 8v8m-19 8q19 15 38 0"/>
+    </g>
+  </symbol>
+  <symbol id="bird" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M42 111q12-52 62-59 39-5 63 29l27 10-27 12q-19 42-68 38-41-3-57-30Z"/>
+      <path d="M97 70q37 1 43 34-24 11-43-4-10-13 0-30Zm55 15h1m-27-38 12-15 12 16m-77 90 12 14m22-13-2 15"/>
+    </g>
+  </symbol>
+  <symbol id="butterfly" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M109 83Q70 19 39 36q-22 20 20 55-42 34-20 53 31 18 70-45 39 63 70 45 22-19-20-53 42-35 20-55-31-17-70 47Z"/>
+      <path d="M109 73v45m0-47q-21-26-20-43m20 43q21-26 20-43m-47 19q15 8 19 22m47-22q-15 8-19 22"/>
+      <circle cx="65" cy="61" r="8"/><circle cx="153" cy="61" r="8"/><circle cx="65" cy="124" r="8"/><circle cx="153" cy="124" r="8"/>
+    </g>
+  </symbol>
+  <symbol id="flower" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M110 85q-8 42-5 68m1-32q-32-29-44-3 15 22 45 13m4-16q29-32 48-8-13 23-46 17"/>
+      <circle cx="110" cy="72" r="15"/><ellipse cx="110" cy="42" rx="14" ry="23"/><ellipse cx="110" cy="102" rx="14" ry="23"/>
+      <ellipse cx="80" cy="72" rx="23" ry="14"/><ellipse cx="140" cy="72" rx="23" ry="14"/>
+    </g>
+  </symbol>
+  <symbol id="fruit" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M42 69h136l-13 78H55Zm-7 0 20-31h110l20 31"/>
+      <path d="M78 67q-20-17-8-32 11-14 25 1 15-22 31-5 12 14-2 36m16-2q-15-22 2-38 17-14 29 8"/>
+      <path d="M72 99q0-23 20-22 20 1 20 25 0 21-20 21-20 0-20-24Zm58-4q14-18 29-8 16 12 1 32-16 18-30 8-13-13 0-32Z"/>
+    </g>
+  </symbol>
+  <symbol id="apple" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M110 54q-43-32-67 4-24 40 7 82 22 30 60 8 38 22 60-8 31-42 7-82-24-36-67-4Z"/>
+      <path d="M109 55q-4-28 15-42m-11 20q25-24 44-9-13 23-43 20"/>
+    </g>
+  </symbol>
+  <symbol id="banana" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M48 38q28 72 115 69 14-1 24-7-18 46-70 55-60 10-93-41-18-27-11-62 13 14 35-14Z"/>
+      <path d="m44 40-12-9m152 69 12 5"/>
+    </g>
+  </symbol>
+  <symbol id="car" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M31 111V83q0-11 13-15l23-8 20-30h51l27 30 17 8q9 5 9 17v26h-19a20 20 0 0 0-40 0H91a20 20 0 0 0-40 0H31Z"/>
+      <path d="m76 60 18-25h35l22 25Z"/><circle cx="71" cy="111" r="16"/><circle cx="152" cy="111" r="16"/>
+    </g>
+  </symbol>
+  <symbol id="house" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m32 82 78-59 78 59v70H32Z"/><path d="M88 152V99h44v53m-78-47h19m57 0h19m-66-36h22m24 0h22"/>
+    </g>
+  </symbol>
+  <symbol id="tree" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M97 148v-45H72l18-25H68l21-27h-17l38-39 38 39h-17l21 27h-22l18 25h-25v45Z"/>
+      <path d="M36 149h148m-117-25 17 5m44-20-17 10m-18-40 18 4"/>
+    </g>
+  </symbol>
+  <symbol id="nature" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="171" cy="37" r="21"/><path d="m15 144 54-66 37 43 28-33 70 56Zm34 0v-48m-15 17q15-28 31 0m-16-14q-1-26 16-29m-65 74h184"/>
+      <path d="M76 145v-44l20-20 20 20v44m-27-42h14m-7 42v-22"/>
+    </g>
+  </symbol>
+  <symbol id="mango" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M113 42q-43-26-67 10-30 46 11 82 38 33 83 2 49-33 24-75-16-27-51-19Z"/>
+      <path d="M110 46q-2-22 18-36m-12 17q27-21 44-6-14 20-43 17"/>
+    </g>
+  </symbol>
+  <symbol id="orange" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="109" cy="91" r="53"/><path d="M108 38q0-22 19-30m-13 12q25-19 41-4-12 20-40 17m-6 34h1m-33 50q29 21 58 0"/>
+    </g>
+  </symbol>
+  <symbol id="leaf" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M34 134Q42 36 182 27q-6 123-126 123-14 0-22-16Z"/><path d="M43 139q45-58 119-96m-84 64-5-31m35 6 27-4m-56 52 4 20m20-47 25 8"/>
+    </g>
+  </symbol>
+  <symbol id="kite" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m110 20 55 54-55 54-55-54Z"/><path d="m110 20-1 108m-54-54 55 54 55-54m-55 54q-17 16-5 26t-9 17m23-32 13 7"/>
+    </g>
+  </symbol>
+  <symbol id="cow" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M48 62q0-19 22-20h84q22 1 22 23v55h-20v-25H69v25H49Z"/>
+      <path d="m72 43-18-21m114 21 18-21m-103 41h1m74 0h1m-41 8q-8 12-16 0m-25 34v25m73-25v25"/>
+      <path d="M77 77q12 11 25-2m24 1q14 10 26-1"/>
+    </g>
+  </symbol>
+  <symbol id="plant" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M110 142V59m0 43Q69 67 62 42q32-4 48 25m0 20q34-37 57-26-8 27-57 40"/>
+      <path d="M65 119h90l-12 35H77Z"/><path d="M110 59q-13-21 0-39 13 18 0 39Z"/>
+    </g>
+  </symbol>
+  <symbol id="road" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M57 154 86 22h48l29 132m-63-107h20m-26 39h32m-39 38h46"/>
+      <path d="M34 142h18m116 0h18m-155-27h20m104 0h20"/>
+    </g>
+  </symbol>
+  <symbol id="water" viewBox="0 0 220 170">
+    <g fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M110 22Q64 79 64 105a46 46 0 0 0 92 0q0-26-46-83Z"/>
+      <path d="M87 111q4 20 23 23m-64 16q17-12 34 0t34 0 34 0 34 0"/>
+    </g>
+  </symbol>
+</svg>

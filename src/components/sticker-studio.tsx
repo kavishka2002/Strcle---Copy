@@ -1071,12 +1071,6 @@ export function StickerStudio() {
             <button className="primary-button" data-trial-allow onClick={() => { setKind("sticker"); changeSection("Create sticker"); }}><Sparkles size={16}/> Create new sticker <ArrowRight size={15}/></button>
             <button className="secondary-button" data-trial-allow onClick={() => { setKind("cover"); setSelectedTemplateId("cover-rose-garden"); changeSection("Create sticker"); }}><BookOpen size={16}/> Create notebook cover</button>
           </div>
-          <button className="kids-dashboard-category" onClick={() => changeSection("Kids Learning & Worksheet Maker")}>
-            <span className="kids-dashboard-icon"><BookOpen size={22}/></span>
-            <span className="kids-dashboard-copy"><b>Kids Learning &amp; Worksheet Maker</b><small>Explore alphabet, numbers, maths, colouring and handwriting sheets.</small></span>
-            <span className="kids-dashboard-cta">Make a worksheet <ArrowRight size={14}/></span>
-            <span className="kids-dashboard-decoration" aria-hidden="true">✿</span>
-          </button>
         </div>
         <div className="hero-art" aria-hidden="true"><div className="hero-sun">✿</div><div className="hero-sticker"><span>✦</span><Image className="hero-sticker-logo" src="/bookshop-icon.svg" width={30} height={30} unoptimized alt=""/><b>PaperBloom</b><small>STATIONERY · CREATIVE</small></div><div className="hero-star">✷</div><div className="hero-pencil">✎</div></div>
       </div>
