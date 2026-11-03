@@ -269,7 +269,7 @@ export function OlPastPapers() {
         <p className="ol-past-papers-note">
           {exam === "O/L"
             ? "Select a subject to see its O/L papers across all available years."
-            : "Grade 5 Scholarship papers are available from 2017 to 2026."}
+            : "Grade 5 Scholarship papers are available from 2017 to 2025."}
         </p>
       )}
     </section>

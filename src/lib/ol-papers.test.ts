@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import manifest from "../data/ol-papers-manifest.json";
-import { createDriveOlPaper, createOlPaper, createScholarshipPaper } from "./ol-papers";
+import scholarshipManifest from "../data/scholarship-papers-manifest.json";
+import {
+  createDriveOlPaper, createDriveScholarshipPaper, createOlPaper, createScholarshipPaper
+} from "./ol-papers";
 
 describe("O/L paper manifest", () => {
   it("contains the complete verified 2015–2025 Drive catalog", () => {
@@ -87,6 +90,48 @@ describe("O/L paper manifest", () => {
     expect(url.origin + url.pathname).toBe("https://drive.google.com/uc");
     expect(url.searchParams.get("export")).toBe("download");
     expect(url.searchParams.get("id")).toBe(manifest.papers[0].driveFileId);
+  });
+});
+
+describe("Grade 5 Scholarship paper manifest", () => {
+  it("contains the available Sinhala papers from 2017 through 2025", () => {
+    expect(scholarshipManifest.version).toBe(1);
+    expect(scholarshipManifest.yearRange).toEqual([2017, 2025]);
+    expect(scholarshipManifest.papers.map(paper => paper.year)).toEqual([
+      2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025
+    ]);
+    expect(new Set(scholarshipManifest.papers.map(paper => paper.driveFileId)).size)
+      .toBe(scholarshipManifest.papers.length);
+
+    for (const record of scholarshipManifest.papers) {
+      expect(record.id).toBe(`scholarship-${record.driveFileId}`);
+      expect(record.originalFileName).toBe(
+        `${record.year}-grade-5-scholarship-examination-sinhala.pdf`
+      );
+      expect(record.language).toBe("Sinhala");
+      expect(record.driveFileId).toMatch(/^[A-Za-z0-9_-]+$/);
+      expect(record.fileType).toBe("application/pdf");
+    }
+  });
+
+  it("maps Drive metadata to a Grade 5 Scholarship paper and direct-download URL", () => {
+    const record = scholarshipManifest.papers[0];
+    const paper = createDriveScholarshipPaper(record);
+    const url = new URL(paper.url);
+
+    expect(paper).toMatchObject({
+      id: record.id,
+      exam: "Grade 5 Scholarship",
+      year: record.year,
+      subject: "Grade 5 Scholarship",
+      medium: "Sinhala medium",
+      fileName: record.originalFileName,
+      driveFileId: record.driveFileId,
+      fileType: "application/pdf"
+    });
+    expect(url.origin + url.pathname).toBe("https://drive.google.com/uc");
+    expect(url.searchParams.get("export")).toBe("download");
+    expect(url.searchParams.get("id")).toBe(record.driveFileId);
   });
 });
 

@@ -2,7 +2,10 @@ import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { NextResponse } from "next/server";
 import manifest from "../../../src/data/ol-papers-manifest.json";
-import { createDriveOlPaper, createScholarshipPaper, type OlPaper } from "../../../src/lib/ol-papers";
+import scholarshipManifest from "../../../src/data/scholarship-papers-manifest.json";
+import {
+  createDriveOlPaper, createDriveScholarshipPaper, createScholarshipPaper, type OlPaper
+} from "../../../src/lib/ol-papers";
 
 export const dynamic = "force-dynamic";
 
@@ -40,8 +43,15 @@ async function getScholarshipPapers(): Promise<OlPaper[]> {
 export async function GET() {
   try {
     const olPapers = manifest.papers.map(createDriveOlPaper);
-    const scholarshipPapers = await getScholarshipPapers();
-    const catalogue = [...olPapers, ...scholarshipPapers];
+    const scholarshipPapers = new Map<string, OlPaper>();
+    for (const paper of [
+      ...scholarshipManifest.papers.map(createDriveScholarshipPaper),
+      ...await getScholarshipPapers()
+    ]) {
+      const key = `${paper.year}|${paper.medium}`;
+      if (!scholarshipPapers.has(key)) scholarshipPapers.set(key, paper);
+    }
+    const catalogue = [...olPapers, ...scholarshipPapers.values()];
     catalogue.sort((left, right) =>
       left.exam.localeCompare(right.exam)
       || right.year - left.year

@@ -32,6 +32,7 @@ import { CvBuilder } from "@/components/cv-builder";
 import { DocumentLibrary } from "@/components/document-library";
 import { A4NoticeLibrary } from "@/components/a4-notice-library";
 import { SinhalaHodiya } from "@/components/sinhala-hodiya";
+import { WorksheetMaker } from "@/components/worksheet-maker";
 import { LanguageToggle, LocalizedUi, ThemeToggle } from "@/components/app-language";
 import { AppToast } from "@/components/app-toast";
 import { DesktopUpdateManager } from "@/components/desktop-update-manager";
@@ -40,9 +41,10 @@ import { useTrialAccess } from "@/components/trial-access";
 import { printCurrentPage } from "@/lib/print-page";
 import type { AssetCategory, DesignImage, EnglishFontFamily, ImageAsset, LanguageMode, MeasurementUnit, SinhalaFontFamily, StickerDesign, StickerTemplate, TextElement, TextInputMode } from "@/types";
 
-type Section = "Home" | "Create sticker" | "Templates" | "Recent designs" | "Saved designs" | "PNG assets" | "Past Paper Finder" | "Grade 6–9 Papers" | "Picture Colouring Library" | "CV Builder" | "Documents & Forms" | "A4 print studio" | "A4 Notice & Advertisement Templates" | "Sinhala Hodiya" | "Custom Print Studio" | "Settings";
+type Section = "Home" | "Create sticker" | "Templates" | "Recent designs" | "Saved designs" | "PNG assets" | "Past Paper Finder" | "Grade 6–9 Papers" | "Picture Colouring Library" | "CV Builder" | "Documents & Forms" | "Kids Learning & Worksheet Maker" | "A4 print studio" | "A4 Notice & Advertisement Templates" | "Sinhala Hodiya" | "Custom Print Studio" | "Settings";
 const navGroups: Array<{ label: string; items: Array<{ title: Section; icon: typeof Home }> }> = [
   { label: "Workspace", items: [{ title: "Home", icon: Home }, { title: "Create sticker", icon: Sparkles }, { title: "Templates", icon: LayoutGrid }] },
+  { label: "Learning studio", items: [{ title: "Kids Learning & Worksheet Maker", icon: BookOpen }] },
   { label: "Your library", items: [{ title: "Recent designs", icon: RotateCcw }, { title: "Saved designs", icon: FolderHeart }, { title: "PNG assets", icon: FileImage }, { title: "Picture Colouring Library", icon: ImagePlus }, { title: "Past Paper Finder", icon: Files }, { title: "Grade 6–9 Papers", icon: BookOpen }, { title: "CV Builder", icon: FileUser }, { title: "Documents & Forms", icon: FileText }] },
   { label: "Production", items: [{ title: "A4 print studio", icon: Printer }, { title: "A4 Notice & Advertisement Templates", icon: Megaphone }, { title: "Sinhala Hodiya", icon: BookOpen }, { title: "Custom Print Studio", icon: Shapes }] },
   { label: "Preferences", items: [{ title: "Settings", icon: Settings }] }
@@ -1050,6 +1052,7 @@ export function StickerStudio() {
     if (section === "Picture Colouring Library") return <ColoringSheetLibrary/>;
     if (section === "CV Builder") return <CvBuilder/>;
     if (section === "Documents & Forms") return <DocumentLibrary/>;
+    if (section === "Kids Learning & Worksheet Maker") return <WorksheetMaker/>;
     if (section === "Recent designs") return DesignList({ title: "Recent designs", items: sortedRecent, empty: "Your latest designs will appear here as you create and save them." });
     if (section === "Saved designs") return DesignList({ title: "Saved designs", items: designs, empty: "No designs saved yet. Create your first sticker and it will be saved on this device." });
     if (section === "Settings") return SettingsPanel();
@@ -1068,6 +1071,12 @@ export function StickerStudio() {
             <button className="primary-button" data-trial-allow onClick={() => { setKind("sticker"); changeSection("Create sticker"); }}><Sparkles size={16}/> Create new sticker <ArrowRight size={15}/></button>
             <button className="secondary-button" data-trial-allow onClick={() => { setKind("cover"); setSelectedTemplateId("cover-rose-garden"); changeSection("Create sticker"); }}><BookOpen size={16}/> Create notebook cover</button>
           </div>
+          <button className="kids-dashboard-category" onClick={() => changeSection("Kids Learning & Worksheet Maker")}>
+            <span className="kids-dashboard-icon"><BookOpen size={22}/></span>
+            <span className="kids-dashboard-copy"><b>Kids Learning &amp; Worksheet Maker</b><small>Explore alphabet, numbers, maths, colouring and handwriting sheets.</small></span>
+            <span className="kids-dashboard-cta">Make a worksheet <ArrowRight size={14}/></span>
+            <span className="kids-dashboard-decoration" aria-hidden="true">✿</span>
+          </button>
         </div>
         <div className="hero-art" aria-hidden="true"><div className="hero-sun">✿</div><div className="hero-sticker"><span>✦</span><Image className="hero-sticker-logo" src="/bookshop-icon.svg" width={30} height={30} unoptimized alt=""/><b>PaperBloom</b><small>STATIONERY · CREATIVE</small></div><div className="hero-star">✷</div><div className="hero-pencil">✎</div></div>
       </div>

@@ -96,6 +96,16 @@ export type OlPaperManifestRecord = {
   syllabus: string | null;
 };
 
+export type ScholarshipPaperManifestRecord = {
+  id: string;
+  year: number;
+  language: string;
+  displayName: string;
+  originalFileName: string;
+  driveFileId: string;
+  fileType: string;
+};
+
 export function createDriveOlPaper(record: OlPaperManifestRecord): OlPaper {
   const downloadUrl = new URL("https://drive.google.com/uc");
   downloadUrl.searchParams.set("export", "download");
@@ -108,6 +118,26 @@ export function createDriveOlPaper(record: OlPaperManifestRecord): OlPaper {
     subject: record.subject,
     medium: record.language === "Not specified" ? "Medium not specified" : `${record.language} medium`,
     syllabus: record.syllabus,
+    fileName: record.originalFileName,
+    url: downloadUrl.href,
+    driveFileId: record.driveFileId,
+    displayName: record.displayName,
+    fileType: record.fileType
+  };
+}
+
+export function createDriveScholarshipPaper(record: ScholarshipPaperManifestRecord): OlPaper {
+  const downloadUrl = new URL("https://drive.google.com/uc");
+  downloadUrl.searchParams.set("export", "download");
+  downloadUrl.searchParams.set("id", record.driveFileId);
+
+  return {
+    id: record.id,
+    exam: "Grade 5 Scholarship",
+    year: record.year,
+    subject: "Grade 5 Scholarship",
+    medium: `${record.language} medium`,
+    syllabus: null,
     fileName: record.originalFileName,
     url: downloadUrl.href,
     driveFileId: record.driveFileId,
