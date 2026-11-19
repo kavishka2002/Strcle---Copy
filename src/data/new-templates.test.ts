@@ -54,6 +54,21 @@ describe("separate new design collection", () => {
     )).toBe(true);
   });
 
+  it("adds editable mascot frame labels with a strong double border", () => {
+    const mascotLabels = newDesignTemplates.filter(template =>
+      ["new-comic-buddy-frame", "new-notebook-mascot-label", "new-bright-hero-mascot"].includes(template.id)
+    );
+
+    expect(mascotLabels).toHaveLength(3);
+    expect(mascotLabels.every(template =>
+      template.background === "#ffffff" || template.background.startsWith("#fff")
+    )).toBe(true);
+    expect(mascotLabels.every(template => template.innerBorder && template.images?.length === 1)).toBe(true);
+    expect(mascotLabels.every(template =>
+      ["name", "school", "grade", "subject"].every(field => template.texts?.some(text => text.field === field))
+    )).toBe(true);
+  });
+
   it("creates editable student, school, grade, and subject fields for each new design", () => {
     for (const template of newDesignTemplates) {
       const design = createDesign("Amaya", {

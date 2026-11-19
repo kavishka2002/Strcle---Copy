@@ -46,13 +46,21 @@ export interface CvPersonalDetails {
   title: string;
   email: string;
   phone: string;
+  alternativePhone: string;
   address: string;
   cityCountry: string;
+  dateOfBirth: string;
+  nic: string;
+  gender: string;
+  nationality: string;
+  maritalStatus: string;
   summary: string;
   linkedIn: string;
   github: string;
   portfolio: string;
 }
+
+export type CvPersonalField = Exclude<keyof CvPersonalDetails, "fullName">;
 
 export interface CvEducation {
   id: string;
@@ -100,6 +108,12 @@ export interface CvEntry {
 export interface CvDraft {
   id: "current";
   personal: CvPersonalDetails;
+  visiblePersonalFields: Partial<Record<CvPersonalField, boolean>>;
+  declarationEnabled: boolean;
+  declarationText: string;
+  declarationDate: string;
+  declarationPlace: string;
+  signature?: Blob;
   education: CvEducation[];
   olResults: CvExamResult[];
   alResults: CvExamResult[];
@@ -133,6 +147,25 @@ export interface CvDraft {
   photo?: Blob;
 }
 
+export interface SavedCv {
+  id: string;
+  type: "cv";
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  templateId: string;
+  draft: CvDraft;
+}
+
+export function calculateCvPrintScale(contentHeightMm: number, pageHeightMm = 297, safetyMarginMm = 2): number | null {
+  if (![contentHeightMm, pageHeightMm, safetyMarginMm].every(Number.isFinite)
+    || contentHeightMm <= 0 || pageHeightMm <= 0 || safetyMarginMm < 0 || safetyMarginMm >= pageHeightMm) {
+    return null;
+  }
+  const scale = Math.min(1, (pageHeightMm - safetyMarginMm) / contentHeightMm);
+  return scale >= 0.78 ? scale : null;
+}
+
 export const cvSectionLabels: Record<CvSectionId, string> = {
   summary: "Professional Summary",
   experience: "Work Experience",
@@ -147,9 +180,37 @@ export const cvSectionLabels: Record<CvSectionId, string> = {
   references: "References"
 };
 
+export function validateCvPersonalDetails(personal: CvPersonalDetails): Record<string, string> {
+  const errors: Record<string, string> = {};
+  if (!personal.fullName.trim()) errors.fullName = "Please enter your full name.";
+  if (personal.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personal.email)) errors.email = "Enter a valid email address.";
+  for (const key of ["phone", "alternativePhone"] as const) {
+    const value = personal[key];
+    if (value && (!/^[+()\d\s./x-]+$/i.test(value) || value.replace(/\D/g, "").length < 7 || value.replace(/\D/g, "").length > 20)) {
+      errors[key] = "Enter a valid phone number.";
+    }
+  }
+  if (personal.nic && !/^[A-Za-z0-9][A-Za-z0-9/-]{4,19}$/.test(personal.nic)) {
+    errors.nic = "Use 5–20 letters, numbers, slashes, or hyphens.";
+  }
+  return errors;
+}
+
 export const emptyCvDraft = (): CvDraft => ({
   id: "current",
-  personal: { fullName: "", title: "", email: "", phone: "", address: "", cityCountry: "", summary: "", linkedIn: "", github: "", portfolio: "" },
+  personal: {
+    fullName: "", title: "", email: "", phone: "", alternativePhone: "", address: "", cityCountry: "",
+    dateOfBirth: "", nic: "", gender: "", nationality: "", maritalStatus: "", summary: "", linkedIn: "", github: "", portfolio: ""
+  },
+  visiblePersonalFields: {
+    title: true, email: true, phone: true, alternativePhone: true, address: true, cityCountry: true,
+    dateOfBirth: true, nic: true, gender: true, nationality: true, maritalStatus: true,
+    summary: true, linkedIn: true, github: true, portfolio: true
+  },
+  declarationEnabled: true,
+  declarationText: "I hereby declare that the information provided above is true and correct to the best of my knowledge.",
+  declarationDate: "",
+  declarationPlace: "",
   education: [],
   olResults: [],
   alResults: [],

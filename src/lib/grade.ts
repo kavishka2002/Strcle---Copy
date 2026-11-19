@@ -16,3 +16,30 @@ export function formatGradeForCard(value: string, language: LanguageMode, englis
   if (number && Number(number) >= 1 && Number(number) <= 13) return `Grade ${Number(number)}`;
   return /[\u0D80-\u0DFF]/.test(value) ? "" : value.trim();
 }
+
+export type GradeClassFormat = "grade-class" | "compact" | "class-label";
+
+export function formatGradeAndClass(
+  grade: string,
+  classDivision: string,
+  language: LanguageMode,
+  englishSubject: boolean,
+  format: GradeClassFormat = "grade-class"
+): string {
+  const formattedGrade = formatGradeForCard(grade, language, englishSubject);
+  const division = classDivision.trim();
+  if (!division) return formattedGrade;
+  if (!formattedGrade) return division;
+  if (format === "compact") {
+    const number = /\d{1,2}/.exec(formattedGrade)?.[0];
+    return number && Number(number) >= 1 && Number(number) <= 13
+      ? `${Number(number)}-${division}`
+      : `${formattedGrade}-${division}`;
+  }
+  if (format === "class-label") return `${formattedGrade} · Class ${division}`;
+  const number = /\d{1,2}/.exec(formattedGrade)?.[0];
+  const gradeText = (englishSubject || language === "English") && number && Number(number) >= 1 && Number(number) <= 13
+    ? `Grade ${number.padStart(2, "0")}`
+    : formattedGrade;
+  return `${gradeText} - ${division}`;
+}

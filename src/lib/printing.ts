@@ -1,4 +1,4 @@
-import type { StickerDesign } from "@/types";
+import type { PrintSubjectCopy, StickerDesign } from "@/types";
 import { isEnglishCardSubject } from "./subject-labels";
 
 export function getPrintSubjects(design: StickerDesign): string[] {
@@ -15,6 +15,31 @@ export function getPrintStickerCount(copiesPerSubject: number, subjects: string[
     throw new RangeError("Copies per subject and the subject list must not be empty.");
   }
   return copiesPerSubject * subjects.length;
+}
+
+export function getPrintSubjectCopies(design: StickerDesign, defaultCopies = 1): PrintSubjectCopy[] {
+  if (!Number.isInteger(defaultCopies) || defaultCopies < 1 || defaultCopies > 1000) {
+    throw new RangeError("Sticker copies must be a whole number between 1 and 1000.");
+  }
+  const savedCopies = new Map((design.printSubjectCopies ?? []).map(item => [item.subject.trim(), item.copies]));
+  return getPrintSubjects(design).map(subject => {
+    const copies = savedCopies.get(subject);
+    if (copies === undefined) return { subject, copies: defaultCopies };
+    if (!Number.isInteger(copies) || copies < 1 || copies > 1000) {
+      throw new RangeError("Each subject quantity must be a whole number between 1 and 1000.");
+    }
+    return { subject, copies };
+  });
+}
+
+export function expandPrintSubjectCopies(subjectCopies: PrintSubjectCopy[]): string[] {
+  if (!subjectCopies.length) throw new RangeError("At least one sticker subject is required.");
+  return subjectCopies.flatMap(({ subject, copies }) => {
+    if (typeof subject !== "string" || !Number.isInteger(copies) || copies < 1 || copies > 1000) {
+      throw new RangeError("Each subject quantity must be a whole number between 1 and 1000.");
+    }
+    return Array.from({ length: copies }, () => subject);
+  });
 }
 
 export function createPrintSticker(design: StickerDesign, subject: string): StickerDesign {

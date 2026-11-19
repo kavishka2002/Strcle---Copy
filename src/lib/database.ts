@@ -1,13 +1,13 @@
 import type { ImageAsset, StickerDesign, StickerTemplate, SubjectPreset } from "@/types";
 import type { CustomPrintDesign } from "./custom-print";
 import type { SavedPaper } from "./past-papers";
-import type { CvDraft } from "./cv";
+import type { CvDraft, SavedCv } from "./cv";
 import type { SavedDocumentDraft } from "./document-library";
 import type { WorksheetDraft } from "./worksheets";
 
 const DB_NAME = "little-paper-studio";
-const DB_VERSION = 7;
-type StoreName = "designs" | "templates" | "assets" | "subjects" | "customPrintDesigns" | "pastPapers" | "cvDrafts" | "documentDrafts" | "worksheetDrafts";
+const DB_VERSION = 8;
+type StoreName = "designs" | "templates" | "assets" | "subjects" | "customPrintDesigns" | "pastPapers" | "cvDrafts" | "cvProjects" | "documentDrafts" | "worksheetDrafts";
 let activeTenantId = "legacy";
 
 function databaseName(tenantId = activeTenantId): string {
@@ -27,6 +27,7 @@ function openDatabase(name = databaseName()): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains("customPrintDesigns")) db.createObjectStore("customPrintDesigns", { keyPath: "id" });
       if (!db.objectStoreNames.contains("pastPapers")) db.createObjectStore("pastPapers", { keyPath: "id" });
       if (!db.objectStoreNames.contains("cvDrafts")) db.createObjectStore("cvDrafts", { keyPath: "id" });
+      if (!db.objectStoreNames.contains("cvProjects")) db.createObjectStore("cvProjects", { keyPath: "id" });
       if (!db.objectStoreNames.contains("documentDrafts")) db.createObjectStore("documentDrafts", { keyPath: "id" });
       if (!db.objectStoreNames.contains("worksheetDrafts")) db.createObjectStore("worksheetDrafts", { keyPath: "id" });
     };
@@ -37,7 +38,7 @@ function openDatabase(name = databaseName()): Promise<IDBDatabase> {
 
 async function copyLegacyDatabase(target: IDBDatabase): Promise<void> {
   const legacy = await openDatabase(DB_NAME);
-  const stores: StoreName[] = ["designs", "templates", "assets", "subjects", "customPrintDesigns", "pastPapers", "cvDrafts", "documentDrafts", "worksheetDrafts"];
+  const stores: StoreName[] = ["designs", "templates", "assets", "subjects", "customPrintDesigns", "pastPapers", "cvDrafts", "cvProjects", "documentDrafts", "worksheetDrafts"];
   await new Promise<void>((resolve, reject) => {
     const names = stores.filter(name => legacy.objectStoreNames.contains(name));
     if (!names.length) {
@@ -172,6 +173,9 @@ export const db = {
   getCvDraft: () => request<CvDraft | undefined>("cvDrafts", "readonly", store => store.get("current")),
   putCvDraft: (draft: CvDraft) => request<IDBValidKey>("cvDrafts", "readwrite", store => store.put(draft)),
   deleteCvDraft: () => request<undefined>("cvDrafts", "readwrite", store => store.delete("current")),
+  getAllSavedCvs: () => request<SavedCv[]>("cvProjects", "readonly", store => store.getAll()),
+  putSavedCv: (cv: SavedCv) => request<IDBValidKey>("cvProjects", "readwrite", store => store.put(cv)),
+  deleteSavedCv: (id: string) => request<undefined>("cvProjects", "readwrite", store => store.delete(id)),
   getAllDocumentDrafts: () => request<SavedDocumentDraft[]>("documentDrafts", "readonly", store => store.getAll()),
   putDocumentDraft: (draft: SavedDocumentDraft) => request<IDBValidKey>("documentDrafts", "readwrite", store => store.put(draft)),
   deleteDocumentDraft: (id: string) => request<undefined>("documentDrafts", "readwrite", store => store.delete(id)),

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createSubjectDesign } from "./design";
 import { calculateSheetLayout } from "./layout";
-import { createPrintSticker, getPrintStickerCount, getPrintSubjectIndex, getPrintSubjects } from "./printing";
+import { createPrintSticker, expandPrintSubjectCopies, getPrintStickerCount, getPrintSubjectCopies, getPrintSubjectIndex, getPrintSubjects } from "./printing";
 import type { StickerTemplate } from "@/types";
 
 const template: StickerTemplate = {
@@ -100,6 +100,49 @@ describe("subject-specific A4 printing", () => {
       perPage: 12,
       pages: 2
     });
+  });
+
+  it("uses each subject's saved quantity to generate only the requested stickers", () => {
+    const mixedDesign = {
+      ...design,
+      printSubjectCopies: [
+        { subject: "සිංහල", copies: 5 },
+        { subject: "Mathematics", copies: 3 },
+        { subject: "Science", copies: 2 }
+      ]
+    };
+    const quantities = getPrintSubjectCopies(mixedDesign);
+    const stickerSubjects = expandPrintSubjectCopies(quantities);
+
+    expect(stickerSubjects).toHaveLength(10);
+    expect(stickerSubjects.filter(subject => subject === "සිංහල")).toHaveLength(5);
+    expect(stickerSubjects.filter(subject => subject === "Mathematics")).toHaveLength(3);
+    expect(stickerSubjects.filter(subject => subject === "Science")).toHaveLength(2);
+  });
+
+  it("defaults older saved designs to one copy per subject", () => {
+    expect(getPrintSubjectCopies(design)).toEqual([
+      { subject: "සිංහල", copies: 1 },
+      { subject: "Mathematics", copies: 1 },
+      { subject: "Science", copies: 1 }
+    ]);
+    expect(getPrintSubjectCopies(design, 4).map(item => item.copies)).toEqual([4, 4, 4]);
+  });
+
+  it("paginates the exact mixed-subject quantity total", () => {
+    const stickerSubjects = expandPrintSubjectCopies([
+      { subject: "සිංහල", copies: 9 },
+      { subject: "Mathematics", copies: 5 },
+      { subject: "Science", copies: 4 }
+    ]);
+
+    expect(stickerSubjects).toHaveLength(18);
+    expect(calculateSheetLayout(90, 45, stickerSubjects.length)).toMatchObject({ perPage: 12, pages: 2 });
+  });
+
+  it("rejects invalid subject quantities", () => {
+    expect(() => expandPrintSubjectCopies([{ subject: "Mathematics", copies: 0 }])).toThrow(RangeError);
+    expect(() => expandPrintSubjectCopies([{ subject: "Mathematics", copies: 1001 }])).toThrow(RangeError);
   });
 
   it.each([

@@ -115,6 +115,27 @@ const designs: NewTemplateStyle[] = [
     accent: "#285d6b", secondary: "#e587a8", decoration: "collection-ocean", layout: "split",
     radius: 13, borderStyle: "solid", image: { assetId: "starter-mermaid", x: 15, y: 53, width: 25 },
     text: { x: 68, width: 58, align: "center", nameY: 23, schoolY: 44, gradeY: 64, subjectY: 83, nameSize: 23, schoolSize: 11, gradeSize: 10, subjectSize: 12 }
+  },
+  {
+    id: "new-comic-buddy-frame", name: "Comic Buddy Frame", background: "#ffffff", border: "#28364a",
+    accent: "#263d68", secondary: "#efad36", decoration: "collection-comic-frame", layout: "split",
+    radius: 8, borderWidth: 2, innerBorder: true, borderStyle: "solid",
+    image: { assetId: "starter-tiger", x: 16, y: 52, width: 32 },
+    text: { x: 67, width: 60, align: "center", nameY: 22, schoolY: 43, gradeY: 63, subjectY: 82, nameSize: 23, schoolSize: 11, gradeSize: 10, subjectSize: 12 }
+  },
+  {
+    id: "new-notebook-mascot-label", name: "Notebook Mascot Label", background: "#fffefa", border: "#2b6f9d",
+    accent: "#284766", secondary: "#f0a143", decoration: "collection-notebook-label", layout: "banner",
+    radius: 10, borderWidth: 1.8, innerBorder: true, borderStyle: "solid",
+    image: { assetId: "starter-penguin", x: 15, y: 52, width: 31 },
+    text: { x: 67, width: 60, align: "center", nameY: 22, schoolY: 43, gradeY: 63, subjectY: 82, nameSize: 23, schoolSize: 11, gradeSize: 10, subjectSize: 12 }
+  },
+  {
+    id: "new-bright-hero-mascot", name: "Bright Hero Mascot", background: "#fffdf7", border: "#dc5945",
+    accent: "#344566", secondary: "#f0a529", decoration: "collection-bright-mascot", layout: "playful",
+    radius: 12, borderWidth: 2, innerBorder: true, borderStyle: "solid",
+    image: { assetId: "starter-bunny", x: 16, y: 52, width: 31 },
+    text: { x: 67, width: 60, align: "center", nameY: 22, schoolY: 43, gradeY: 63, subjectY: 82, nameSize: 23, schoolSize: 11, gradeSize: 10, subjectSize: 12 }
   }
 ];
 

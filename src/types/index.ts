@@ -52,11 +52,17 @@ export interface DesignImage {
   rotation: number;
 }
 
+export interface PrintSubjectCopy {
+  subject: string;
+  copies: number;
+}
+
 export interface StickerDesign {
   id: string;
   name: string;
   kind: DesignKind;
   templateId: string;
+  labelMode?: "full" | "name" | "subject";
   layout?: StickerTemplate["layout"];
   language: LanguageMode;
   widthMm: number;
@@ -74,6 +80,7 @@ export interface StickerDesign {
   showCutline: boolean;
   texts: TextElement[];
   printSubjects?: string[];
+  printSubjectCopies?: PrintSubjectCopy[];
   defaultCardName?: string;
   defaultCardGrade?: string;
   defaultCardSchool?: string;
@@ -95,6 +102,7 @@ export interface StickerTemplate {
   heightMm: number;
   customDimensionUnit?: MeasurementUnit;
   customStyleTemplateId?: string;
+  labelMode?: "full" | "name" | "subject";
   background: string;
   backgroundAssetId?: string;
   borderColor: string;

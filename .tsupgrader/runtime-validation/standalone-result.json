@@ -1,0 +1,124 @@
+{
+  "planHash": "08130148053fca1b83a3a534f6e740dd3b4228517df259c5573877974ed94815",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-11-19T10:52:27.3880832Z",
+  "retryCount": 1,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 0,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "typecheck",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E lanka-sticker-studio@1.0.10 typecheck\r\n\u003E tsc --noEmit\r\n\r\n",
+        "durationMs": 7673
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E lanka-sticker-studio@1.0.10 test\r\n\u003E vitest run\r\n\r\n\r\n\u001B[1m\u001B[7m\u001B[36m RUN \u001B[39m\u001B[27m\u001B[22m \u001B[36mv2.1.9 \u001B[39m\u001B[90mC:/Users/User/Desktop/Strcle - Copy\u001B[39m\r\n\r\n \u001B[32m\u2713\u001B[39m src/lib/printing.test.ts \u001B[2m(\u001B[22m\u001B[2m20 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 49\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/data/custom-art-templates.test.ts \u001B[2m(\u001B[22m\u001B[2m9 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 84\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/worksheets.test.ts \u001B[2m(\u001B[22m\u001B[2m16 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 135\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/design.test.ts \u001B[2m(\u001B[22m\u001B[2m8 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 23\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/custom-print.test.ts \u001B[2m(\u001B[22m\u001B[2m11 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 55\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/ol-papers.test.ts \u001B[2m(\u001B[22m\u001B[2m10 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 211\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/data/sinhala-hodiya.test.ts \u001B[2m(\u001B[22m\u001B[2m10 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 49\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/coloring-sheets.test.ts \u001B[2m(\u001B[22m\u001B[2m8 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 55\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m scripts/drive-pdf-download.test.mjs \u001B[2m(\u001B[22m\u001B[2m5 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 310\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/data/new-templates.test.ts \u001B[2m(\u001B[22m\u001B[2m6 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 28\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m scripts/verify-desktop-release.test.mjs \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 380\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/document-library.test.ts \u001B[2m(\u001B[22m\u001B[2m4 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 28\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/data/a4-notice-templates.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 21\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/data/printable-label-templates.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 47\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/custom-size.test.ts \u001B[2m(\u001B[22m\u001B[2m12 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 22\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m app/api/past-papers/download/route.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 344\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m past paper download route\u001B[2m \u003E \u001B[22mreturns only validated bytes from a catalog-listed PDF \u001B[33m321\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/sinhala.test.ts \u001B[2m(\u001B[22m\u001B[2m14 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 43\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/past-paper-sources/doenets.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 81\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/grade-papers.test.ts \u001B[2m(\u001B[22m\u001B[2m4 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 65\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/data/templates.test.ts \u001B[2m(\u001B[22m\u001B[2m3 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 29\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/subject-labels.test.ts \u001B[2m(\u001B[22m\u001B[2m13 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 13\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/text-layout.test.ts \u001B[2m(\u001B[22m\u001B[2m5 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 22\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/local-auth.test.ts \u001B[2m(\u001B[22m\u001B[2m7 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[33m 1263\u001B[2mms\u001B[22m\u001B[39m\r\n   \u001B[33m\u001B[2m\u2713\u001B[22m\u001B[39m offline account input and password handling\u001B[2m \u003E \u001B[22mstores a salted PBKDF2-derived value rather than the original password \u001B[33m1240\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/a4-notice-layout.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 8\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/cv.test.ts \u001B[2m(\u001B[22m\u001B[2m4 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 12\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/layout.test.ts \u001B[2m(\u001B[22m\u001B[2m14 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 18\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/grade.test.ts \u001B[2m(\u001B[22m\u001B[2m5 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 8\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/font-catalog.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 10\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m app/api/ol-papers/route.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 82\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/subject-presets.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 8\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/a4-notice-storage.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 9\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/data/sinhala-alphabet.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 8\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m src/lib/past-papers.test.ts \u001B[2m(\u001B[22m\u001B[2m2 tests\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 13\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[39m scripts/public-asset-copy.test.mjs \u001B[2m(\u001B[22m\u001B[2m1 test\u001B[22m\u001B[2m)\u001B[22m\u001B[90m 7\u001B[2mms\u001B[22m\u001B[39m\r\n \u001B[32m\u2713\u001B[\n\u2026[truncated]",
+        "durationMs": 15312,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "package_json",
+          "testsTotal": 223,
+          "testsPassed": 223,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "production-build",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E lanka-sticker-studio@1.0.10 build\r\n\u003E next build\r\n\r\n\u25B2 Next.js 16.4.6 (Turbopack)\r\n\u2713 Running next.config.mjs took 55ms\r\n- Experiments (use with caution):\r\n  \u00B7 optimizePackageImports\r\n\r\n  Creating an optimized production build ...\r\n\u2713 Compiled successfully in 10.0s\r\n  Running TypeScript ...\r\n  Finished TypeScript in 11.1s ...\r\n  Collecting page data using 3 workers ...\r\n  Generating static pages using 3 workers (0/5) ...\r\n  Generating static pages using 3 workers (1/5) \r\n  Generating static pages using 3 workers (2/5) \r\n  Generating static pages using 3 workers (3/5) \r\n\u2713 Generating static pages using 3 workers (5/5) in 524ms\r\n  Finalizing page optimization ...\r\n\r\nRoute (app)\r\n\u250C \u25CB /\r\n\u251C \u25CB /_not-found\r\n\u251C \u0192 /api/coloring-sheets\r\n\u251C \u0192 /api/grade-papers\r\n\u251C \u0192 /api/ol-papers\r\n\u251C \u0192 /api/past-papers/download\r\n\u251C \u0192 /api/past-papers/search\r\n\u2514 \u25CB /manifest.webmanifest\r\n\r\n\r\n\u25CB  (Static)   prerendered as static content\r\n\u0192  (Dynamic)  server-rendered on demand\r\n\r\n",
+        "durationMs": 27170
+      },
+      {
+        "name": "production-server-home",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!DOCTYPE html\u003E\u003Chtml lang=\u0022en\u0022\u003E\u003Chead\u003E\u003Cmeta charSet=\u0022utf-8\u0022/\u003E\u003Clink rel=\u0022preconnect\u0022 href=\u0022/\u0022 crossorigin=\u0022\u0022/\u003E\u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1\u0022/\u003E\u003Clink rel=\u0022stylesheet\u0022 href=\u0022/_next/static/chunks/3u2jfk_7yjsyy.css\u0022 data-precedence=\u0022next\u0022/\u003E\u003Clink rel=\u0022stylesheet\u0022 href=\u0022/_next/static/chunks/0xk-hvjwsw1_1.css\u0022 data-precedence=\u0022next\u0022/\u003E\u003Clink rel=\u0022preload\u0022 as=\u0022script\u0022 fetchPriority=\u0022low\u0022 href=\u0022/_next/static/chunks/0kqziy-7_gy73.js\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/2hdecj3ovz78a.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/092r-mewpaf3q.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/turbopack-2u1d16houkiyo.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/1v174vdh6gbif.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/22qy-qww4wt5a.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/27ehe4sf7wuow.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cmeta name=\u0022theme-color\u0022 content=\u0022#214d3d\u0022/\u003E\u003Ctitle\u003EPaperBloom | Stationery \u0026amp; Creative Studio\u003C/title\u003E\u003Cmeta name=\u0022description\u0022 content=\u0022PaperBloom stationery, printable designs, and creative templates.\u0022/\u003E\u003Clink rel=\u0022manifest\u0022 href=\u0022/manifest.webmanifest\u0022/\u003E\u003Clink rel=\u0022icon\u0022 href=\u0022/bookshop-icon.svg\u0022/\u003E\u003Clink rel=\u0022apple-touch-icon\u0022 href=\u0022/bookshop-icon.svg\u0022/\u003E\u003Cmeta name=\u0022next-size-adjust\u0022 content=\u0022\u0022/\u003E\u003Cscript src=\u0022/_next/static/chunks/0cz1d0mv5g_q7.js\u0022 noModule=\u0022\u0022\u003E\u003C/script\u003E\u003C/head\u003E\u003Cbody\u003E\u003Cdiv hidden=\u0022\u0022\u003E\u003C!--$--\u003E\u003C!--/$--\u003E\u003C/div\u003E\u003Cdiv class=\u0022auth-loading\u0022\u003E\u003Cdiv class=\u0022auth-brand-icon\u0022\u003E\u003Csvg xmlns=\u0022http://www.w3.org/2000/svg\u0022 width=\u002224\u0022 height=\u002224\u0022 viewBox=\u00220 0 24 24\u0022 fill=\u0022none\u0022 stroke=\u0022currentColor\u0022 stroke-width=\u00222\u0022 stroke-linecap=\u0022round\u0022 stroke-linejoin=\u0022round\u0022 class=\u0022lucide lucide-book-open\u0022\u003E\u003Cpath d=\u0022M12 7v14\u0022\u003E\u003C/path\u003E\u003Cpath d=\u0022M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\u0022\u003E\u003C/path\u003E\u003C/svg\u003E\u003C/div\u003E\u003Cp\u003E\u0D9C\u0DD2\u0DAB\u0DD4\u0DB8\u0DCA \u0DC3\u0D9A\u0DC3\u0DB8\u0DD2\u0DB1\u0DCA\u2026\u003C/p\u003E\u003C/div\u003E\u003C!--$--\u003E\u003C!--/$--\u003E\u003Cscript id=\u0022_R_\u0022\u003E(globalThis[\u0022TURBOPACK\u0022] || (globalThis[\u0022TURBOPACK\u0022] = [])).push({\u0022otherChunks\u0022:[\u0022static/chunks/0kqziy-7_gy73.js\u0022,\u0022static/chunks/2hdecj3ovz78a.js\u0022,\u0022static/chunks/092r-mewpaf3q.js\u0022],\u0022runtimeModuleIds\u0022:[94553]});\u003C/script\u003E\u003Cscript src=\u0022/_next/static/chunks/0kqziy-7_gy73.js\u0022 async=\u0022\u0022\u003E\u003C/script\u003E\u003Cscript\u003E(self.__next_f=self.__next_f||[]).push([0])\u003C/script\u003E\u003Cscript\u003Eself.__next_f.push([1,\u00221:\\\u0022$Sreact.fragment\\\u0022\\n2:\\\u0022/_next/static/chunks/1v174vdh6gbif.js\\\u0022\\n3:\\\u0022ServiceWorkerRegistration\\\u0022\\n4:I[21838,[\\\u0022$2\\\u0022],\\\u0022$3\\\u0022]\\n5:I[39756,[\\\u0022$2\\\u0022],\\\u0022default\\\u0022]\\n6:I[37457,[\\\u0022$2\\\u0022],\\\u0022default\\\u0022]\\n8:\\\u0022/_next/static/chunks/22qy-qww4wt5a.js\\\u0022\\n9:\\\u0022/_next/static/chunks/27ehe4sf7wuow.js\\\u0022\\na:\\\u0022DesktopUpdateManager\\\u0022\\nb:I[28978,[\\\u0022$2\\\u0022,\\\u0022$8\\\u0022,\\\u0022$9\\\u0022],\\\u0022$a\\\u0022]\\nc:\\\u0022LocalAccountGate\\\u0022\\nd:I[25857,[\\\u0022$2\\\u0022,\\\u0022$8\\\u0022,\\\u0022$9\\\u0022],\\\u0022$c\\\u0022]\\ne:I[74355,[\\\u0022$2\\\u0022,\\\u0022$8\\\u0022,\\\u0022$9\\\u0022],\\\u0022StickerStudio\\\u0022]\\nf:I[97367,[\\\u0022$2\\\u0022],\\\u0022OutletBoundary\\\u0022]\\n10:\\\u0022$Sreact.suspense\\\u0022\\n12:\\\u0022ViewportBoundary\\\u0022\\n13:I[97367,[\\\u0022$2\\\u0022],\\\u0022$12\\\u0022]\\n15:\\\u0022MetadataBoundary\\\u0022\\n16:I[97367,[\\\u0022$2\\\u0022],\\\u0022$15\\\u0022]\\n18:I[68027,[\\\u0022$2\\\u0022],\\\u0022default\\\u0022,1]\\n:HL[\\\u0022/_next/static/chunks/3u2jfk_7yjsyy.css\\\u0022,\\\u0022style\\\u0022]\\n:HL[\\\u0022/_next/static/chunks/0xk-hvjwsw1_1.css\\\u0022,\\\u0022style\\\u0022]\\n:HC[\\\u0022/\\\u0022,\\\u0022\\\u0022]\\n7:[[\\\u0022children\\\u0022,{\\\u0022s\\\u0022:\\\u0022__PAGE__\\\u0022,\\\u0022h\\\u0022:512,\\\u0022d\\\u0022:{\\\u0022r\\\u0022:[\\\u0022$\\\u0022,\\\u0022$1\\\u0022,\\\u0022c\\\u0022,{\\\u0022children\\\u0022:[[[\\\u0022$\\\u0022,\\\u0022$Lb\\\u0022,null,{\\\u0022showSettings\\\u0022:false}],[\\\u0022$\\\u0022,\\\u0022$Ld\\\u0022,null,{\\\u0022children\\\u0022:[\\\u0022$\\\u0022,\\\u0022$Le\\\u0022,null,{}]}]],[[\\\u0022$\\\u0022,\\\u0022script\\\u0022,\\\u0022script-0\\\u0022,{\\\u0022src\\\u0022:\\\u0022/_next/static/chunks/22qy-qww4wt5a.js\\\u0022,\\\u0022async\\\u0022:true,\\\u0022nonce\\\u0022:\\\u0022$undefined\\\u0022}],[\\\u0022$\\\u0022,\\\u0022script\\\u0022,\\\u0022script-1\\\u0022,{\\\u0022src\\\u0022:\\\u0022/_next/static/chunks/27ehe4sf7wuow.js\\\u0022,\\\u0022async\\\u0022:true,\\\u0022nonce\\\u0022:\\\u0022$undefined\\\u0022}]],[\\\u0022$\\\u0022,\\\u0022$Lf\\\u0022,null,{\\\u0022children\\\u0022:[\\\u0022$\\\u0022,\\\u0022$10\\\u0022,null,{\\\u0022name\\\u0022:\\\u0022Next.MetadataOutlet\\\u0022,\\\u0022children\\\u0022:\\\u0022$@11\\\u0022}]}]]}],\\\u0022p\\\u0022:false,\\\u0022v\\\u0022:null}}]]\\n0:{\\\u0022P\\\u0022:null,\\\u0022c\\\u0022:[\\\u0022\\\u0022,\\\u0022\\\u0022],\\\u0022q\\\u0022:\\\u0022\\\u0022,\\\u0022i\\\u0022:false,\\\u0022t\\\u0022:{\\\u0022t\\\u0022:{\\\u0022s\\\u0022:\\\u0022\\\u0022,\\\u0022h\\\u0022:528,\\\u0022d\\\u0022:{\\\u0022r\\\u0022:[\\\u0022$\\\u0022,\\\u0022$1\\\u0022,\\\u0022c\\\u0022,{\\\u0022children\\\u0022:[[[\\\u0022$\\\u0022,\\\u0022link\\\u0022,\\\u00220\\\u0022,{\\\u0022rel\\\u0022:\\\u0022stylesheet\\\u0022,\\\u0022href\\\u0022:\\\u0022/_next/static/chunks/3u2jfk_7yjsyy.css\\\u0022,\\\u0022precedence\\\u0022:\\\u0022next\\\u0022,\\\u0022crossOrigin\\\u0022:\\\u0022$undefined\\\u0022,\\\u0022nonce\\\u0022:\\\u0022$undefined\\\u0022}],[\\\u0022$\\\u0022,\\\u0022link\\\u0022,\\\u00221\\\u0022,{\\\u0022rel\\\u0022:\\\u0022styles\n\u2026[truncated]",
+        "durationMs": 70
+      }
+    ],
+    "executions": [
+      {
+        "source": "typecheck",
+        "resolvedExecutable": "C:\\nvm4w\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "typecheck"
+        ],
+        "cwd": "C:\\Users\\User\\Desktop\\Strcle - Copy",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\nvm4w\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "C:\\Users\\User\\Desktop\\Strcle - Copy",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "production-build",
+        "resolvedExecutable": "C:\\nvm4w\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "build"
+        ],
+        "cwd": "C:\\Users\\User\\Desktop\\Strcle - Copy",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "production-server-home",
+        "resolvedExecutable": "C:\\nvm4w\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "start",
+          "--",
+          "--port",
+          "3100"
+        ],
+        "cwd": "C:\\Users\\User\\Desktop\\Strcle - Copy",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

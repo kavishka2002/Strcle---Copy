@@ -2,8 +2,8 @@
 
 import {
   Award, ArrowDown, ArrowUp, BookOpen, BriefcaseBusiness, Check, Code2, ContactRound, Download, Eye,
-  FilePlus2, FileText, FolderKanban, GraduationCap, HeartHandshake, ImagePlus, Link2, Plus, Printer,
-  RotateCcw, Search, Trash2, UserRound, UsersRound, X
+  Copy, FilePlus2, FileText, FolderKanban, FolderOpen, GraduationCap, HeartHandshake, ImagePlus, Link2, Pencil, Plus, Printer,
+  PenLine, RotateCcw, Save, Search, Trash2, UserRound, UsersRound, X
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
@@ -13,8 +13,8 @@ import { printCurrentPage } from "@/lib/print-page";
 import { LocalizedUi } from "@/components/app-language";
 import { db } from "@/lib/database";
 import {
-  cvSectionLabels, emptyCvDraft,
-  type CvDraft, type CvEducation, type CvEntry, type CvExamResult, type CvExperience, type CvPersonalDetails, type CvProject, type CvSectionId, type CvTextStyle
+  calculateCvPrintScale, cvSectionLabels, emptyCvDraft, validateCvPersonalDetails,
+  type CvDraft, type CvEducation, type CvEntry, type CvExamResult, type CvExperience, type CvPersonalDetails, type CvPersonalField, type CvProject, type CvSectionId, type CvTextStyle, type SavedCv
 } from "@/lib/cv";
 
 const templateCategories = ["All Templates", "Students & Graduates", "IT & Technology", "Healthcare", "Corporate", "Academic & Research", "Creative", "ATS-Friendly"] as const;
@@ -227,12 +227,13 @@ function SectionPanel({ title, description, icon, children }: { title: string; d
   return <section className="cv-form-panel"><div className="cv-panel-title"><span className="cv-panel-icon">{icon}</span><div><h2>{title}</h2>{description && <p>{description}</p>}</div></div>{children}</section>;
 }
 
-function CvDocument({ draft, photoUrl, selectedTextId, onSelectText }: {
-  draft: CvDraft; photoUrl: string | null; selectedTextId: string | null; onSelectText: (id: string, label: string) => void;
+function CvDocument({ draft, photoUrl, signatureUrl, selectedTextId, onSelectText }: {
+  draft: CvDraft; photoUrl: string | null; signatureUrl: string | null; selectedTextId: string | null; onSelectText: (id: string, label: string) => void;
 }) {
   const { personal } = draft;
   const template = templates.find(item => item.id === draft.templateId) ?? templates[0];
   const showSection = (id: CvSectionId) => draft.enabledSections.includes(id);
+  const showPersonalField = (id: CvPersonalField) => draft.visiblePersonalFields?.[id] !== false;
   const entries = (id: "certifications" | "training" | "publications" | "volunteer" | "awards" | "references") => draft[id].filter(hasEntry);
   const text = (id: string, label: string, value: string, as: "span" | "h1" | "h2" | "h3" | "p" | "b" | "div" = "span", block = false, extraStyle?: React.CSSProperties, icon?: ReactNode) =>
     <CvEditableText id={id} label={label} value={value} as={as} block={block} selected={selectedTextId === id} onSelect={onSelectText} style={draft.textStyles[id]} extraStyle={extraStyle} icon={icon}/>;
@@ -250,7 +251,7 @@ function CvDocument({ draft, photoUrl, selectedTextId, onSelectText }: {
   const hasContent = (id: CvSectionId) => {
     if (!showSection(id)) return false;
     switch (id) {
-      case "summary": return Boolean(clean(personal.summary));
+      case "summary": return showPersonalField("summary") && Boolean(clean(personal.summary));
       case "education": return draft.education.some(hasEducation);
       case "experience": return draft.experience.some(hasExperience);
       case "projects": return draft.projects.some(hasProject);
@@ -334,13 +335,32 @@ function CvDocument({ draft, photoUrl, selectedTextId, onSelectText }: {
     {text(`custom:${block.id}:title`, "Custom section heading", block.title, "h2", true)}
     {text(`custom:${block.id}:body`, "Custom text block", block.body, "p", true)}
   </section>);
-  const contacts = [
-    personal.email && ["Email", personal.email, "email"],
-    personal.phone && ["Phone", personal.phone, "phone"],
-    personal.address && ["Address", personal.address, "address"],
-    personal.cityCountry && ["Location", personal.cityCountry, "cityCountry"]
-  ].filter((item): item is [string, string, string] => Boolean(item?.[0] && item[1]));
-  const social = [[personal.linkedIn, "LinkedIn", "linkedIn"], [personal.github, "GitHub", "github"], [personal.portfolio, "Portfolio", "portfolio"]].filter((item): item is [string, string, string] => Boolean(item[0]));
+  const contactCandidates: Array<[CvPersonalField, string, string]> = [
+    ["email", "Email", personal.email], ["phone", "Phone", personal.phone],
+    ["alternativePhone", "Alternative phone", personal.alternativePhone], ["address", "Address", personal.address],
+    ["cityCountry", "Location", personal.cityCountry], ["dateOfBirth", "Date of birth", personal.dateOfBirth],
+    ["nic", "NIC", personal.nic], ["gender", "Gender", personal.gender],
+    ["nationality", "Nationality", personal.nationality], ["maritalStatus", "Marital status", personal.maritalStatus]
+  ];
+  const contacts = contactCandidates.filter(([key, , value]) => showPersonalField(key) && Boolean(clean(value)));
+  const socialCandidates: Array<[string, string, CvPersonalField]> = [
+    [personal.linkedIn, "LinkedIn", "linkedIn"], [personal.github, "GitHub", "github"], [personal.portfolio, "Portfolio", "portfolio"]
+  ];
+  const social = socialCandidates.filter(([value, , key]) => showPersonalField(key) && Boolean(clean(value)));
+  const declaration = draft.declarationEnabled && (clean(draft.declarationText) || signatureUrl || draft.declarationDate || draft.declarationPlace)
+    ? <section className="cv-declaration">
+      {clean(draft.declarationText) && <><h2>Declaration</h2><p>{draft.declarationText}</p></>}
+      <div className="cv-signature-row">
+        <div className="cv-signature-image">{signatureUrl && <Image src={signatureUrl} alt="Signature" width={300} height={90} unoptimized/>}</div>
+        <div className="cv-signature-meta">
+          {draft.declarationDate && <span><b>Date:</b> {draft.declarationDate}</span>}
+          {draft.declarationPlace && <span><b>Place:</b> {draft.declarationPlace}</span>}
+          <span className="cv-signature-caption">Signature</span>
+        </div>
+      </div>
+    </section>
+    : null;
+  const footer = <footer className="cv-document-footer">{showPersonalField("cityCountry") && personal.cityCountry && <span>{personal.cityCountry}</span>}</footer>;
   const nameStyle = draft.textStyles["personal.fullName"];
   const nameBaseSize = nameStyle?.fontSizePt ?? (gridTemplateIds.has(draft.templateId) ? 22 : 25);
   const [fitName, setFitName] = useState<{ size: number; wrap: boolean } | null>(null);
@@ -385,7 +405,7 @@ function CvDocument({ draft, photoUrl, selectedTextId, onSelectText }: {
     {gridTemplateIds.has(draft.templateId) ? <div className="cv-document-grid">
       <aside className="cv-document-sidebar">
         {draft.headerLayout.photoSide === "left" && photo}
-        {contacts.length > 0 && <section className="cv-side-block"><h2><ContactRound aria-hidden="true" size={12}/> Contact</h2>{contacts.map(([label, value, key]) => <p key={label}><b>{label}</b>{text(`personal.${key}`, label, value, "span", true)}</p>)}</section>}
+        {contacts.length > 0 && <section className="cv-side-block"><h2><ContactRound aria-hidden="true" size={12}/> Contact</h2>{contacts.map(([key, label, value]) => <p key={key}><b>{label}</b>{text(`personal.${key}`, label, value, "span", true)}</p>)}</section>}
         {social.length > 0 && <section className="cv-side-block"><h2><Link2 aria-hidden="true" size={12}/> Links</h2>{social.map(([url, label, key]) => <p key={label}><b>{label}</b>{text(`personal.${key}`, `${label} link`, url, "span", true)}</p>)}</section>}
         {sidebarSections}
       </aside>
@@ -394,12 +414,12 @@ function CvDocument({ draft, photoUrl, selectedTextId, onSelectText }: {
           {draft.headerLayout.photoSide === "top" && photo}
           <div className="cv-header-copy" ref={headerCopyRef}>
             {text("personal.fullName", "Full name", personal.fullName || "Your Name", "h1", true, nameCss)}
-            {personal.title && text("personal.title", "Professional title", personal.title, "p", true)}
+            {showPersonalField("title") && personal.title && text("personal.title", "Professional title", personal.title, "p", true)}
           </div>
           {draft.headerLayout.photoSide === "right" && photo}
         </header>
         {["developer", "software-engineer", "data-analyst"].includes(draft.templateId) && <span className="cv-template-label">PROFILE</span>}
-        {mainSections}{customSections}
+        {mainSections}{customSections}{declaration}{footer}
       </div>
     </div> : <>
       <header className={`cv-document-header cv-custom-header photo-${draft.headerLayout.photoSide}`} style={{ gap: `${draft.headerLayout.photoGapMm}mm` }}>
@@ -407,15 +427,16 @@ function CvDocument({ draft, photoUrl, selectedTextId, onSelectText }: {
         {draft.headerLayout.photoSide === "left" && photo}
         <div className="cv-header-copy" ref={headerCopyRef}>
           {text("personal.fullName", "Full name", personal.fullName || "Your Name", "h1", true, nameCss)}
-          {personal.title && text("personal.title", "Professional title", personal.title, "p", true)}
-          {contacts.length > 0 && <div className="cv-contact-line">{contacts.map(([label, value, key]) => <span key={label}><b>{label}: </b>{text(`personal.${key}`, label, value)}</span>)}</div>}
+          {showPersonalField("title") && personal.title && text("personal.title", "Professional title", personal.title, "p", true)}
+          {contacts.length > 0 && <div className="cv-contact-line">{contacts.map(([key, label, value]) => <span key={key}><b>{label}: </b>{text(`personal.${key}`, label, value)}</span>)}</div>}
           {social.length > 0 && <div className="cv-contact-line cv-social-line">{social.map(([url, label, key]) => <span key={label}><b>{label}: </b>{text(`personal.${key}`, `${label} link`, url)}</span>)}</div>}
         </div>
         {draft.headerLayout.photoSide === "right" && photo}
       </header>
       <div className="cv-document-body">{documentSectionOrder.map(section)}{customSections}</div>
+      {declaration}
+      {footer}
     </>}
-    <footer className="cv-document-footer">{personal.cityCountry && <span>{personal.cityCountry}</span>}</footer>
   </article>;
 }
 
@@ -429,7 +450,18 @@ function SkillLine({ title, collection, skills, ids, text }: {
 }
 
 const personalTextKeys: readonly (keyof CvPersonalDetails)[] = [
-  "fullName", "title", "email", "phone", "address", "cityCountry", "summary", "linkedIn", "github", "portfolio"
+  "fullName", "title", "email", "phone", "alternativePhone", "address", "cityCountry", "dateOfBirth", "nic",
+  "gender", "nationality", "maritalStatus", "summary", "linkedIn", "github", "portfolio"
+];
+const personalVisibilityOptions: Array<{ key: CvPersonalField; label: string }> = [
+  { key: "title", label: "Professional title" }, { key: "email", label: "Email address" },
+  { key: "phone", label: "Mobile number" }, { key: "alternativePhone", label: "Alternative phone" },
+  { key: "address", label: "Home address" }, { key: "cityCountry", label: "City and country" },
+  { key: "dateOfBirth", label: "Date of birth" }, { key: "nic", label: "NIC number" },
+  { key: "gender", label: "Gender" }, { key: "nationality", label: "Nationality" },
+  { key: "maritalStatus", label: "Marital status" }, { key: "summary", label: "Professional summary" },
+  { key: "linkedIn", label: "LinkedIn profile" }, { key: "github", label: "GitHub profile" },
+  { key: "portfolio", label: "Portfolio website" }
 ];
 const entryCollections = ["certifications", "training", "publications", "volunteer", "awards", "references"] as const;
 type EntryCollection = (typeof entryCollections)[number];
@@ -485,20 +517,29 @@ function defaultTextWeight(id: string): CvTextStyle["fontWeight"] {
 }
 
 export function CvBuilder() {
-  const { confirm, host: dialogHost } = useAppDialog();
+  const { confirm, prompt, host: dialogHost } = useAppDialog();
   const [draft, setDraft] = useState<CvDraft>(emptyCvDraft);
+  const [savedCvs, setSavedCvs] = useState<SavedCv[]>([]);
+  const [activeSavedCvId, setActiveSavedCvId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingProject, setSavingProject] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [validation, setValidation] = useState<Record<string, string>>({});
   const [mobileTab, setMobileTab] = useState<"form" | "preview">("form");
+  const [savedCvsOpen, setSavedCvsOpen] = useState(false);
+  const [savedCvSearch, setSavedCvSearch] = useState("");
+  const [savedCvSort, setSavedCvSort] = useState<"updated" | "created" | "name">("updated");
   const [templateCategory, setTemplateCategory] = useState<TemplateCategory>("All Templates");
   const [templateSearch, setTemplateSearch] = useState("");
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
   const [selectedTextLabel, setSelectedTextLabel] = useState("");
   const [styleMode, setStyleMode] = useState<"basic" | "advanced">("basic");
   const photoInput = useRef<HTMLInputElement>(null);
+  const signatureInput = useRef<HTMLInputElement>(null);
+  const signatureCanvas = useRef<HTMLCanvasElement>(null);
+  const drawingSignature = useRef(false);
   const skillInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [skillDrafts, setSkillDrafts] = useState<Record<string, string>>({ technicalSkills: "", softSkills: "", languages: "" });
   const fontFamilies = [...new Set([draft.fontFamily, ...Object.values(draft.textStyles).map(style => style.fontFamily).filter((family): family is string => Boolean(family))])];
@@ -512,6 +553,16 @@ export function CvBuilder() {
       && (!query || [template.name, template.detail, template.category, template.career, template.layout, sinhalaTemplateSearchTerms[template.id] ?? ""].some(value => value.toLocaleLowerCase().includes(query)))
     );
   }, [templateCategory, templateSearch]);
+  const filteredSavedCvs = useMemo(() => {
+    const query = savedCvSearch.trim().toLocaleLowerCase();
+    return savedCvs
+      .filter(cv => !query || cv.name.toLocaleLowerCase().includes(query) || cv.draft.personal.fullName.toLocaleLowerCase().includes(query))
+      .sort((left, right) => savedCvSort === "name"
+        ? left.name.localeCompare(right.name)
+        : savedCvSort === "created"
+          ? right.createdAt - left.createdAt
+          : right.updatedAt - left.updatedAt);
+  }, [savedCvSearch, savedCvSort, savedCvs]);
 
   useEffect(() => {
     let active = true;
@@ -523,6 +574,11 @@ export function CvBuilder() {
           ...baseline,
           ...saved,
           personal: { ...baseline.personal, ...saved.personal },
+          visiblePersonalFields: { ...baseline.visiblePersonalFields, ...saved.visiblePersonalFields },
+          declarationEnabled: saved.declarationEnabled ?? baseline.declarationEnabled,
+          declarationText: saved.declarationText ?? baseline.declarationText,
+          declarationDate: saved.declarationDate ?? baseline.declarationDate,
+          declarationPlace: saved.declarationPlace ?? baseline.declarationPlace,
           olResults: saved.olResults ?? baseline.olResults,
           alResults: saved.alResults ?? baseline.alResults,
           olExamYear: saved.olExamYear ?? baseline.olExamYear,
@@ -552,6 +608,16 @@ export function CvBuilder() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    void db.getAllSavedCvs().then(cvs => {
+      if (active) setSavedCvs(cvs);
+    }).catch(cause => {
+      if (active) setError(cause instanceof Error ? cause.message : "Could not load your saved CVs.");
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
     if (!ready) return;
     const timeout = window.setTimeout(() => {
       setSaving(true);
@@ -565,6 +631,20 @@ export function CvBuilder() {
 
   const photoUrl = useMemo(() => draft.photo ? URL.createObjectURL(draft.photo) : null, [draft.photo]);
   useEffect(() => () => { if (photoUrl) URL.revokeObjectURL(photoUrl); }, [photoUrl]);
+  const signatureUrl = useMemo(() => draft.signature ? URL.createObjectURL(draft.signature) : null, [draft.signature]);
+  useEffect(() => () => { if (signatureUrl) URL.revokeObjectURL(signatureUrl); }, [signatureUrl]);
+  useEffect(() => {
+    const canvas = signatureCanvas.current;
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    if (!signatureUrl) return;
+    const image = new window.Image();
+    image.onload = () => context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    image.src = signatureUrl;
+    return () => { image.onload = null; };
+  }, [signatureUrl]);
 
   useEffect(() => {
     let active = true;
@@ -579,6 +659,72 @@ export function CvBuilder() {
   }, [fontKey]);
 
   const updatePersonal = (key: keyof CvDraft["personal"], value: string) => setDraft(previous => ({ ...previous, personal: { ...previous.personal, [key]: value } }));
+  const signaturePoint = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    return {
+      x: (event.clientX - rect.left) * event.currentTarget.width / rect.width,
+      y: (event.clientY - rect.top) * event.currentTarget.height / rect.height
+    };
+  };
+  const beginSignature = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = event.currentTarget;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      setError("Signature drawing is unavailable in this browser.");
+      return;
+    }
+    drawingSignature.current = true;
+    canvas.setPointerCapture(event.pointerId);
+    const point = signaturePoint(event);
+    context.beginPath();
+    context.moveTo(point.x, point.y);
+    context.lineWidth = 4;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = "#23364c";
+  };
+  const drawSignature = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingSignature.current) return;
+    const context = event.currentTarget.getContext("2d");
+    if (!context) return;
+    const point = signaturePoint(event);
+    context.lineTo(point.x, point.y);
+    context.stroke();
+  };
+  const saveSignature = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingSignature.current) return;
+    drawingSignature.current = false;
+    const canvas = event.currentTarget;
+    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    canvas.toBlob(blob => {
+      if (!blob) {
+        setError("Could not save the drawn signature.");
+        return;
+      }
+      setDraft(previous => ({ ...previous, signature: blob }));
+      setError("");
+    }, "image/png");
+  };
+  const onSignatureUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("Choose a JPG, PNG, or WebP signature image.");
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setError("Signature image must be 4 MB or smaller.");
+      return;
+    }
+    setDraft(previous => ({ ...previous, signature: file }));
+    setError("");
+  };
+  const clearSignature = () => {
+    const canvas = signatureCanvas.current;
+    canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+    setDraft(previous => ({ ...previous, signature: undefined }));
+  };
   const updateRecord = <T extends { id: string }, K extends keyof T>(collection: keyof Pick<CvDraft, "education" | "olResults" | "alResults" | "experience" | "projects" | "certifications" | "training" | "publications" | "volunteer" | "awards" | "references">, id: string, key: K, value: T[K]) => {
     setDraft(previous => ({
       ...previous,
@@ -673,12 +819,102 @@ export function CvBuilder() {
     setError("");
   };
   const validate = () => {
-    const next: Record<string, string> = {};
-    if (!clean(draft.personal.fullName)) next.fullName = "Please enter your full name.";
-    if (draft.personal.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.personal.email)) next.email = "Enter a valid email address.";
-    if (draft.personal.phone && !/^[+()\d\s.-]{7,25}$/.test(draft.personal.phone)) next.phone = "Enter a valid phone number.";
+    const next = validateCvPersonalDetails(draft.personal);
     setValidation(next);
     return Object.keys(next).length === 0;
+  };
+  const saveCvProject = async (asNew = false) => {
+    const existing = asNew ? undefined : savedCvs.find(cv => cv.id === activeSavedCvId);
+    const requestedName = existing
+      ? existing.name
+      : await prompt("Save CV", "Choose a name for this saved CV.", draft.personal.fullName.trim() || "Untitled CV");
+    const name = requestedName?.trim();
+    if (!name) return;
+    const now = Date.now();
+    const project: SavedCv = {
+      id: existing?.id ?? uid(),
+      type: "cv",
+      name,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+      templateId: draft.templateId,
+      draft: { ...draft, id: "current" }
+    };
+    setSavingProject(true);
+    try {
+      await Promise.all([db.putSavedCv(project), db.putCvDraft(project.draft)]);
+      setSavedCvs(previous => [project, ...previous.filter(cv => cv.id !== project.id)]);
+      setActiveSavedCvId(project.id);
+      setNotice(`"${project.name}" saved.`);
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not save this CV.");
+    } finally {
+      setSavingProject(false);
+    }
+  };
+  const openSavedCv = async (project: SavedCv, preview = false) => {
+    if (!await confirm("Open saved CV", `Open "${project.name}"? Your current draft will be replaced. Save it first if you need to keep those changes.`)) return;
+    const restored = { ...project.draft, id: "current" as const };
+    try {
+      await db.putCvDraft(restored);
+      setDraft(restored);
+      setActiveSavedCvId(project.id);
+      setValidation({});
+      setSelectedTextId(null);
+      setMobileTab(preview ? "preview" : "form");
+      setError("");
+      setNotice(`"${project.name}" opened.`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not open this saved CV.");
+    }
+  };
+  const duplicateSavedCv = async (project: SavedCv) => {
+    const now = Date.now();
+    const duplicate: SavedCv = {
+      ...project,
+      id: uid(),
+      name: `${project.name} (copy)`,
+      createdAt: now,
+      updatedAt: now,
+      draft: { ...project.draft, id: "current" }
+    };
+    try {
+      await Promise.all([db.putSavedCv(duplicate), db.putCvDraft(duplicate.draft)]);
+      setSavedCvs(previous => [duplicate, ...previous]);
+      setDraft(duplicate.draft);
+      setActiveSavedCvId(duplicate.id);
+      setNotice(`"${duplicate.name}" created.`);
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not duplicate this CV.");
+    }
+  };
+  const renameSavedCv = async (project: SavedCv) => {
+    const requestedName = await prompt("Rename saved CV", "Choose a new name for this CV.", project.name);
+    const name = requestedName?.trim();
+    if (!name || name === project.name) return;
+    const renamed = { ...project, name, updatedAt: Date.now() };
+    try {
+      await db.putSavedCv(renamed);
+      setSavedCvs(previous => previous.map(cv => cv.id === project.id ? renamed : cv));
+      setNotice(`CV renamed to "${name}".`);
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not rename this CV.");
+    }
+  };
+  const deleteSavedCv = async (project: SavedCv) => {
+    if (!await confirm("Delete saved CV", `Delete "${project.name}"? This cannot be undone unless you have a backup.`)) return;
+    try {
+      await db.deleteSavedCv(project.id);
+      setSavedCvs(previous => previous.filter(cv => cv.id !== project.id));
+      if (activeSavedCvId === project.id) setActiveSavedCvId(null);
+      setNotice(`"${project.name}" deleted.`);
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not delete this CV.");
+    }
   };
   const preparePrint = async () => {
     if (!validate()) {
@@ -688,26 +924,59 @@ export function CvBuilder() {
     }
     try {
       await document.fonts.ready;
-      if (photoUrl) {
-        const image = document.querySelector<HTMLImageElement>(".cv-print-root .cv-profile-photo");
-        await image?.decode();
-      }
+      await Promise.all(Array.from(document.querySelectorAll<HTMLImageElement>(".cv-print-root img")).map(image => image.decode()));
       document.documentElement.classList.add("cv-print-mode");
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      const page = document.querySelector<HTMLElement>(".cv-print-root .cv-page");
+      let fitNotice = "";
+      if (page) {
+        const grid = page.querySelector<HTMLElement>(".cv-document-grid");
+        const previousWidth = page.style.width;
+        const previousPadding = page.style.padding;
+        const previousGridColumns = grid?.style.gridTemplateColumns;
+        try {
+          page.style.width = "210mm";
+          if (grid) page.style.padding = "0";
+          if (grid && window.matchMedia("(max-width: 760px)").matches) {
+            grid.style.gridTemplateColumns = "34% minmax(0, 66%)";
+          }
+          await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+          const pageBounds = page.getBoundingClientRect();
+          const contentBottom = Array.from(page.querySelectorAll<HTMLElement>("*"))
+            .reduce((bottom, element) => Math.max(bottom, element.getBoundingClientRect().bottom), pageBounds.top);
+          const contentHeightMm = (contentBottom - pageBounds.top) * 25.4 / 96;
+          const scale = calculateCvPrintScale(contentHeightMm);
+          if (scale === null) {
+            fitNotice = "This CV is too long to fit on one page at a readable size; it will print across multiple pages.";
+          } else if (scale < 1) {
+            page.style.setProperty("--cv-print-zoom", String(scale));
+            fitNotice = `CV fitted to one A4 page at ${Math.round(scale * 100)}% size.`;
+          }
+        } finally {
+          page.style.width = previousWidth;
+          page.style.padding = previousPadding;
+          if (grid && previousGridColumns !== undefined) grid.style.gridTemplateColumns = previousGridColumns;
+        }
+      }
       const result = await printCurrentPage();
-      if (result.status === "browser") setNotice("Select your printer in the print dialog and choose Print.");
-      else if (result.status === "previewed") setNotice("Print preview opened. Choose your printer and select Print.");
-      else if (result.status === "printed") setNotice(`Print job sent to ${result.printerName}.`);
+      if (result.status === "browser") setNotice(`Select your printer in the print dialog and choose Print.${fitNotice ? ` ${fitNotice}` : ""}`);
+      else if (result.status === "previewed") setNotice(`Print preview opened. Choose your printer and select Print.${fitNotice ? ` ${fitNotice}` : ""}`);
+      else if (result.status === "printed") setNotice(`Print job sent to ${result.printerName}.${fitNotice ? ` ${fitNotice}` : ""}`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not prepare the CV for print or PDF.");
     } finally {
-      window.setTimeout(() => document.documentElement.classList.remove("cv-print-mode"), 500);
+      window.setTimeout(() => {
+        document.querySelector<HTMLElement>(".cv-print-root .cv-page")?.style.removeProperty("--cv-print-zoom");
+        document.documentElement.classList.remove("cv-print-mode");
+      }, 500);
     }
   };
   const startNew = async () => {
-    if (!await confirm("Start a new CV", "Clear the saved CV and start a new one? This cannot be undone.")) return;
+    if (!await confirm("Start a new CV", "Replace the current draft with a blank CV? Save it first if you need to keep these changes.")) return;
     try {
       await db.deleteCvDraft();
       setDraft(emptyCvDraft());
+      setActiveSavedCvId(null);
       setValidation({});
       setSelectedTextId(null);
       setSelectedTextLabel("");
@@ -781,12 +1050,39 @@ export function CvBuilder() {
   return <LocalizedUi><div className="cv-builder">
     <header className="cv-page-header">
       <div><div className="eyebrow">LOCAL · PRIVATE CV WORKSPACE</div><h1 className="page-title">CV Builder</h1><p>Create a polished CV with a live preview. Your draft and photo stay in this browser.</p></div>
-      <div className="cv-header-actions"><span className={`cv-save-state ${saving ? "saving" : ""}`} role="status">{!ready ? "Loading draft…" : saving ? "Saving locally…" : "Draft saved locally"}</span><button type="button" className="secondary-button" onClick={() => void startNew()}><FilePlus2 size={15}/> New CV</button></div>
+      <div className="cv-header-actions">
+        <span className={`cv-save-state ${saving || savingProject ? "saving" : ""}`} role="status">{!ready ? "Loading draft…" : savingProject ? "Saving CV…" : saving ? "Saving locally…" : "Draft saved locally"}</span>
+        <button type="button" className="primary-button" disabled={!ready || savingProject} onClick={() => void saveCvProject()}><Save size={15}/> Save CV</button>
+        <button type="button" className="secondary-button" disabled={!ready || savingProject} onClick={() => void saveCvProject(true)}><Copy size={15}/> Save As New</button>
+        <button type="button" className="secondary-button" aria-expanded={savedCvsOpen} onClick={() => setSavedCvsOpen(open => !open)}><FolderOpen size={15}/> My Saved CVs</button>
+        <button type="button" className="secondary-button" onClick={() => void startNew()}><FilePlus2 size={15}/> New CV</button>
+      </div>
     </header>
     <div className="app-toast-stack no-print">
       {error && <AppToast key={`cv-error-${error}`} variant="error" message={error} onClose={() => setError("")}/>}
       {notice && <AppToast key={`cv-notice-${notice}`} variant="success" message={notice} onClose={() => setNotice("")}/>}
     </div>
+    {savedCvsOpen && <section className="cv-saved-cvs-panel no-print" aria-label="My Saved CVs">
+      <div className="cv-section-heading">
+        <div><h2>My Saved CVs / සුරකින ලද CV</h2><p>Saved privately on this device. Open a CV to continue editing it.</p></div>
+        <span>{savedCvs.length} saved</span>
+      </div>
+      <div className="cv-saved-cvs-tools">
+        <label className="cv-template-search"><Search size={16}/><input value={savedCvSearch} onChange={event => setSavedCvSearch(event.target.value)} placeholder="Search by CV or candidate name" aria-label="Search saved CVs"/>{savedCvSearch && <button type="button" aria-label="Clear saved CV search" onClick={() => setSavedCvSearch("")}><X size={14}/></button>}</label>
+        <label className="cv-field"><span>Sort by</span><select className="cv-input" value={savedCvSort} onChange={event => setSavedCvSort(event.target.value as typeof savedCvSort)}><option value="updated">Recently edited</option><option value="created">Recently created</option><option value="name">Name</option></select></label>
+      </div>
+      {filteredSavedCvs.length ? <div className="cv-saved-cvs-grid">{filteredSavedCvs.map(project => <article className={`cv-saved-cv-card ${activeSavedCvId === project.id ? "active" : ""}`} key={project.id}>
+        <div className="cv-saved-cv-thumb" aria-hidden="true"><b>{project.draft.personal.fullName || "Your Name"}</b><span>{project.draft.personal.title || "Curriculum Vitae"}</span><i/><i/><i/></div>
+        <div className="cv-saved-cv-info"><b title={project.name}>{project.name}</b><span>{project.draft.personal.fullName || "No candidate name"} · {templates.find(template => template.id === project.templateId)?.name ?? "CV template"}</span><small>Edited {new Date(project.updatedAt).toLocaleDateString()}</small></div>
+        <div className="cv-saved-cv-actions">
+          <button type="button" className="small-action" onClick={() => void openSavedCv(project)}><FolderOpen size={13}/> Open / Edit</button>
+          <button type="button" className="small-action" onClick={() => void openSavedCv(project, true)}><Eye size={13}/> Preview</button>
+          <button type="button" className="small-action" onClick={() => void duplicateSavedCv(project)}><Copy size={13}/> Duplicate</button>
+          <button type="button" className="small-action" onClick={() => void renameSavedCv(project)}><Pencil size={13}/> Rename</button>
+          <button type="button" className="small-action text-rose-700 hover:!bg-rose-50" onClick={() => void deleteSavedCv(project)}><Trash2 size={13}/> Delete</button>
+        </div>
+      </article>)}</div> : <p className="cv-saved-cvs-empty">{savedCvs.length ? "No saved CVs match your search." : "No saved CVs yet. Use Save CV to add your first one."}</p>}
+    </section>}
     <div className="cv-mobile-tabs">
       <button type="button" className={mobileTab === "form" ? "selected" : ""} onClick={() => setMobileTab("form")}>Form</button>
       <button type="button" className={mobileTab === "preview" ? "selected" : ""} onClick={() => setMobileTab("preview")}>Preview</button>
@@ -814,10 +1110,23 @@ export function CvBuilder() {
             <Field label="Full name" required value={draft.personal.fullName} onChange={value => updatePersonal("fullName", value)} placeholder="e.g. Amaya Perera" error={validation.fullName}/>
             <Field label="Professional title" value={draft.personal.title} onChange={value => updatePersonal("title", value)} placeholder="e.g. Software Engineer"/>
             <Field label="Email address" type="email" value={draft.personal.email} onChange={value => updatePersonal("email", value)} placeholder="name@example.com" error={validation.email}/>
-            <Field label="Phone number" type="tel" value={draft.personal.phone} onChange={value => updatePersonal("phone", value)} placeholder="+94 77 123 4567" error={validation.phone}/>
-            <Field label="Address" value={draft.personal.address} onChange={value => updatePersonal("address", value)} placeholder="Street, area"/>
+            <Field label="Mobile number" type="tel" value={draft.personal.phone} onChange={value => updatePersonal("phone", value)} placeholder="+94 77 123 4567" error={validation.phone}/>
+            <Field label="Alternative phone number" type="tel" value={draft.personal.alternativePhone} onChange={value => updatePersonal("alternativePhone", value)} placeholder="Optional" error={validation.alternativePhone}/>
+            <Field label="Home address" value={draft.personal.address} onChange={value => updatePersonal("address", value)} placeholder="Street, area"/>
             <Field label="City and country" value={draft.personal.cityCountry} onChange={value => updatePersonal("cityCountry", value)} placeholder="Colombo, Sri Lanka"/>
+            <Field label="Date of birth" type="date" value={draft.personal.dateOfBirth} onChange={value => updatePersonal("dateOfBirth", value)}/>
+            <Field label="NIC number" value={draft.personal.nic} onChange={value => updatePersonal("nic", value)} placeholder="Optional · local or international format" error={validation.nic}/>
+            <Field label="Gender" value={draft.personal.gender} onChange={value => updatePersonal("gender", value)} placeholder="Optional"/>
+            <Field label="Nationality" value={draft.personal.nationality} onChange={value => updatePersonal("nationality", value)} placeholder="Optional"/>
+            <Field label="Marital status" value={draft.personal.maritalStatus} onChange={value => updatePersonal("maritalStatus", value)} placeholder="Optional"/>
             <Field label="Professional summary / career objective" value={draft.personal.summary} onChange={value => updatePersonal("summary", value)} multiline placeholder="Briefly describe your experience, strengths, or career goals."/>
+            <Field label="LinkedIn profile" value={draft.personal.linkedIn} onChange={value => updatePersonal("linkedIn", value)} placeholder="https://linkedin.com/in/..."/>
+            <Field label="Portfolio website" value={draft.personal.portfolio} onChange={value => updatePersonal("portfolio", value)} placeholder="https://..."/>
+            <Field label="GitHub profile" value={draft.personal.github} onChange={value => updatePersonal("github", value)} placeholder="https://github.com/..."/>
+          </div>
+          <div className="cv-visibility-controls" aria-label="Personal fields shown in the CV">
+            <b>Show in CV</b>
+            <div className="cv-section-toggles">{personalVisibilityOptions.map(({ key, label }) => <label key={key}><input type="checkbox" checked={draft.visiblePersonalFields?.[key] !== false} onChange={event => setDraft(previous => ({ ...previous, visiblePersonalFields: { ...previous.visiblePersonalFields, [key]: event.target.checked } }))}/>{label}</label>)}</div>
           </div>
           <div className="cv-photo-row">
             <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={onPhoto}/>
@@ -879,7 +1188,6 @@ export function CvBuilder() {
             {draft[id].map((item, index) => <div className="cv-record-card" key={item.id}><div className="cv-record-head"><b>{title} {index + 1}</b><button type="button" className="cv-icon-button" aria-label={`Remove ${title} ${index + 1}`} onClick={() => removeRecord(id, item.id)}><Trash2 size={15}/></button></div><div className="cv-form-grid"><Field label="Name / title" value={item.title} onChange={value => updateRecord<CvEntry, "title">(id, item.id, "title", value)} placeholder="Title"/><Field label="Organization" value={item.organization} onChange={value => updateRecord<CvEntry, "organization">(id, item.id, "organization", value)} placeholder="Organization or institution"/><Field label="Date" value={item.date} onChange={value => updateRecord<CvEntry, "date">(id, item.id, "date", value)} placeholder="Year or period"/><Field label="Details (optional)" value={item.description} onChange={value => updateRecord<CvEntry, "description">(id, item.id, "description", value)} multiline placeholder="Short details"/></div></div>)}
             <button type="button" className="cv-add-button" onClick={() => setDraft(previous => ({ ...previous, [id]: [...previous[id], { id: uid(), title: "", organization: "", date: "", description: "" }] }))}><Plus size={15}/> Add {title}</button>
           </div>)}
-          <div className="cv-form-grid cv-social-fields"><Field label="LinkedIn profile" value={draft.personal.linkedIn} onChange={value => updatePersonal("linkedIn", value)} placeholder="https://linkedin.com/in/…"/><Field label="GitHub profile" value={draft.personal.github} onChange={value => updatePersonal("github", value)} placeholder="https://github.com/…"/><Field label="Portfolio website" value={draft.personal.portfolio} onChange={value => updatePersonal("portfolio", value)} placeholder="https://…"/></div>
         </SectionPanel>
 
         <SectionPanel title="Template Settings" description="Adjust your document appearance." icon={<RotateCcw size={17}/>}>
@@ -961,12 +1269,33 @@ export function CvBuilder() {
           </div>)}
           <button className="cv-add-button" type="button" onClick={addCustomBlock}><Plus size={15}/> Add text section</button>
         </SectionPanel>
+
+        <SectionPanel title="Declaration & Signature" description="Add an optional declaration and sign at the end of your CV." icon={<PenLine size={17}/>}>
+          <label className="cv-check-field"><input type="checkbox" checked={draft.declarationEnabled} onChange={event => setDraft(previous => ({ ...previous, declarationEnabled: event.target.checked }))}/> Show declaration and signature on the CV</label>
+          <div className="cv-form-grid mt-3">
+            <Field label="Declaration text" value={draft.declarationText} onChange={value => setDraft(previous => ({ ...previous, declarationText: value }))} multiline placeholder="Write your declaration"/>
+            <Field label="Date" type="date" value={draft.declarationDate} onChange={value => setDraft(previous => ({ ...previous, declarationDate: value }))}/>
+            <Field label="Place" value={draft.declarationPlace} onChange={value => setDraft(previous => ({ ...previous, declarationPlace: value }))} placeholder="Optional"/>
+          </div>
+          <div className="cv-signature-editor">
+            <label className="cv-field"><span>Draw your signature</span>
+              <canvas ref={signatureCanvas} className="cv-signature-canvas" width={1200} height={220} aria-label="Signature drawing canvas"
+                onPointerDown={beginSignature} onPointerMove={drawSignature} onPointerUp={saveSignature} onPointerCancel={saveSignature}/>
+            </label>
+            <input ref={signatureInput} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={onSignatureUpload}/>
+            <div className="cv-signature-actions">
+              <button type="button" className="small-action" onClick={() => signatureInput.current?.click()}><ImagePlus size={14}/>{signatureUrl ? "Replace signature image" : "Upload signature image"}</button>
+              <button type="button" className="small-action" onClick={clearSignature}><X size={14}/>Clear signature</button>
+              <small>Draw above or upload a transparent PNG, JPG, or WebP (up to 4 MB).</small>
+            </div>
+          </div>
+        </SectionPanel>
       </div>
       <aside className={`cv-preview-column ${mobileTab === "form" ? "mobile-hide" : ""}`}>
         <div className="cv-preview-toolbar"><div><b>Live CV Preview</b><small>{templates.find(template => template.id === draft.templateId)?.name} · A4</small></div><div><button type="button" className="primary-button" data-paid-feature disabled={!ready || !fontReady} onClick={() => void preparePrint()}><Download size={15}/> Download PDF</button><button type="button" className="secondary-button" data-paid-feature disabled={!ready || !fontReady} onClick={() => void preparePrint()}><Printer size={15}/> Print CV</button></div></div>
         <p className="cv-pdf-guidance">A print preview opens. Choose your printer and select <b>Print</b>.</p>
         {!fontReady && <p className="cv-loading" role="status">Loading document fonts…</p>}
-        <div className="cv-paper-stage"><div className="cv-print-root"><CvDocument draft={draft} photoUrl={photoUrl} selectedTextId={selectedTextId} onSelectText={onSelectText}/></div></div>
+        <div className="cv-paper-stage"><div className="cv-print-root"><CvDocument draft={draft} photoUrl={photoUrl} signatureUrl={signatureUrl} selectedTextId={selectedTextId} onSelectText={onSelectText}/></div></div>
       </aside>
     </div>
     {dialogHost}

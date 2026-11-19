@@ -438,6 +438,26 @@ export function StickerDecoration({
         <path d="m13 7 1.3 2.8 2.8 1.3-2.8 1.2-1.3 2.8-1.2-2.8L9 11.1l2.8-1.3zM87 34l1.1 2.4 2.4 1.1-2.4 1.1-1.1 2.4-1.1-2.4-2.4-1.1 2.4-1.1z" fill={secondary}/>
         <circle cx="21" cy="39" r=".9" fill={accent}/><circle cx="79" cy="11" r=".9" fill={accent}/>
       </svg>;
+    case "collection-comic-frame":
+      return <svg aria-hidden="true" viewBox="0 0 100 50" preserveAspectRatio="none" style={common}>
+        <rect x="2" y="2" width="96" height="46" rx="6" fill="none" stroke={secondary} strokeWidth="1.2"/>
+        <path d="m75 7 1.5 3.2 3.5.5-2.5 2.4.6 3.5-3.1-1.7-3.1 1.7.6-3.5-2.5-2.4 3.5-.5zM91 34l1 2.1 2.4.3-1.7 1.7.4 2.4-2.1-1.1-2.1 1.1.4-2.4-1.7-1.7 2.4-.3z" fill={secondary}/>
+        <circle cx="63" cy="8" r="1" fill={accent}/><circle cx="84" cy="42" r="1" fill={accent}/>
+      </svg>;
+    case "collection-notebook-label":
+      return <svg aria-hidden="true" viewBox="0 0 100 50" preserveAspectRatio="none" style={common}>
+        <rect x="2" y="2" width="96" height="46" rx="7" fill="none" stroke={secondary} strokeWidth=".8"/>
+        <path d="M53 9h39M53 13h31M53 17h36M53 37h30" stroke={accent} strokeWidth=".45" opacity=".22"/>
+        <path d="M51 4v42" stroke={secondary} strokeWidth=".8" strokeDasharray="1 1.5" opacity=".75"/>
+        <circle cx="91" cy="7" r="1.3" fill={secondary}/><circle cx="93" cy="43" r="1.3" fill={accent}/>
+      </svg>;
+    case "collection-bright-mascot":
+      return <svg aria-hidden="true" viewBox="0 0 100 50" preserveAspectRatio="none" style={common}>
+        <rect x="2" y="2" width="96" height="46" rx="8" fill="none" stroke={secondary} strokeWidth="1.1"/>
+        <path d="M53 6h39M53 44h39" stroke={accent} strokeWidth=".55" strokeDasharray="1.4 1.4" opacity=".5"/>
+        <path d="m80 18 1.5 3 3.4.5-2.5 2.4.6 3.4-3-1.6-3.1 1.6.6-3.4-2.5-2.4 3.5-.5z" fill={secondary}/>
+        <circle cx="90" cy="14" r="1" fill={accent}/><circle cx="90" cy="36" r="1" fill={accent}/>
+      </svg>;
     default:
       return null;
   }
