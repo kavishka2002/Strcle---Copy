@@ -157,6 +157,12 @@ export interface SavedCv {
   draft: CvDraft;
 }
 
+export function getRecentSavedCvs(projects: readonly SavedCv[], limit = 10): SavedCv[] {
+  return [...projects]
+    .sort((left, right) => right.createdAt - left.createdAt || right.updatedAt - left.updatedAt)
+    .slice(0, Math.max(0, Math.floor(limit)));
+}
+
 export function calculateCvPrintScale(contentHeightMm: number, pageHeightMm = 297, safetyMarginMm = 2): number | null {
   if (![contentHeightMm, pageHeightMm, safetyMarginMm].every(Number.isFinite)
     || contentHeightMm <= 0 || pageHeightMm <= 0 || safetyMarginMm < 0 || safetyMarginMm >= pageHeightMm) {
@@ -207,7 +213,7 @@ export const emptyCvDraft = (): CvDraft => ({
     dateOfBirth: true, nic: true, gender: true, nationality: true, maritalStatus: true,
     summary: true, linkedIn: true, github: true, portfolio: true
   },
-  declarationEnabled: true,
+  declarationEnabled: false,
   declarationText: "I hereby declare that the information provided above is true and correct to the best of my knowledge.",
   declarationDate: "",
   declarationPlace: "",

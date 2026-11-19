@@ -13,7 +13,7 @@ import { printCurrentPage } from "@/lib/print-page";
 import { LocalizedUi } from "@/components/app-language";
 import { db } from "@/lib/database";
 import {
-  calculateCvPrintScale, cvSectionLabels, emptyCvDraft, validateCvPersonalDetails,
+  calculateCvPrintScale, cvSectionLabels, emptyCvDraft, getRecentSavedCvs, validateCvPersonalDetails,
   type CvDraft, type CvEducation, type CvEntry, type CvExamResult, type CvExperience, type CvPersonalDetails, type CvPersonalField, type CvProject, type CvSectionId, type CvTextStyle, type SavedCv
 } from "@/lib/cv";
 
@@ -563,6 +563,7 @@ export function CvBuilder() {
           ? right.createdAt - left.createdAt
           : right.updatedAt - left.updatedAt);
   }, [savedCvSearch, savedCvSort, savedCvs]);
+  const recentSavedCvs = useMemo(() => getRecentSavedCvs(savedCvs), [savedCvs]);
 
   useEffect(() => {
     let active = true;
@@ -1067,6 +1068,13 @@ export function CvBuilder() {
         <div><h2>My Saved CVs / සුරකින ලද CV</h2><p>Saved privately on this device. Open a CV to continue editing it.</p></div>
         <span>{savedCvs.length} saved</span>
       </div>
+      {recentSavedCvs.length > 0 && <section className="cv-recent-cvs" aria-label="Recent CVs">
+        <div className="cv-recent-cvs-heading"><h3>Recent CVs · latest 10 created</h3><span>{recentSavedCvs.length}</span></div>
+        <div className="cv-recent-cvs-list">{recentSavedCvs.map(project => <button type="button" className="cv-recent-cv" key={project.id} onClick={() => void openSavedCv(project)}>
+          <span><b>{project.name}</b><small>{project.draft.personal.fullName || "No candidate name"}</small></span>
+          <time dateTime={new Date(project.createdAt).toISOString()}>{new Date(project.createdAt).toLocaleDateString()}</time>
+        </button>)}</div>
+      </section>}
       <div className="cv-saved-cvs-tools">
         <label className="cv-template-search"><Search size={16}/><input value={savedCvSearch} onChange={event => setSavedCvSearch(event.target.value)} placeholder="Search by CV or candidate name" aria-label="Search saved CVs"/>{savedCvSearch && <button type="button" aria-label="Clear saved CV search" onClick={() => setSavedCvSearch("")}><X size={14}/></button>}</label>
         <label className="cv-field"><span>Sort by</span><select className="cv-input" value={savedCvSort} onChange={event => setSavedCvSort(event.target.value as typeof savedCvSort)}><option value="updated">Recently edited</option><option value="created">Recently created</option><option value="name">Name</option></select></label>
@@ -1270,8 +1278,8 @@ export function CvBuilder() {
           <button className="cv-add-button" type="button" onClick={addCustomBlock}><Plus size={15}/> Add text section</button>
         </SectionPanel>
 
-        <SectionPanel title="Declaration & Signature" description="Add an optional declaration and sign at the end of your CV." icon={<PenLine size={17}/>}>
-          <label className="cv-check-field"><input type="checkbox" checked={draft.declarationEnabled} onChange={event => setDraft(previous => ({ ...previous, declarationEnabled: event.target.checked }))}/> Show declaration and signature on the CV</label>
+        <SectionPanel title="Declaration & Signature" description="Add an optional declaration and signature at the end of your CV." icon={<PenLine size={17}/>}>
+          <label className="cv-check-field"><input type="checkbox" checked={draft.declarationEnabled} onChange={event => setDraft(previous => ({ ...previous, declarationEnabled: event.target.checked }))}/> Include declaration and signature in the CV</label>
           <div className="cv-form-grid mt-3">
             <Field label="Declaration text" value={draft.declarationText} onChange={value => setDraft(previous => ({ ...previous, declarationText: value }))} multiline placeholder="Write your declaration"/>
             <Field label="Date" type="date" value={draft.declarationDate} onChange={value => setDraft(previous => ({ ...previous, declarationDate: value }))}/>

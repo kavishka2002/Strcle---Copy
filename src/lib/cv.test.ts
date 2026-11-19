@@ -1,13 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { calculateCvPrintScale, emptyCvDraft, validateCvPersonalDetails } from "./cv";
+import { calculateCvPrintScale, emptyCvDraft, getRecentSavedCvs, validateCvPersonalDetails } from "./cv";
 
 describe("CV optional personal and declaration details", () => {
   it("provides a default declaration and visible optional personal fields", () => {
     const draft = emptyCvDraft();
-    expect(draft.declarationEnabled).toBe(true);
+    expect(draft.declarationEnabled).toBe(false);
     expect(draft.declarationText).toBe("I hereby declare that the information provided above is true and correct to the best of my knowledge.");
     expect(draft.visiblePersonalFields.alternativePhone).toBe(true);
     expect(draft.visiblePersonalFields.dateOfBirth).toBe(true);
+  });
+
+  it("returns the ten most recently created saved CVs without changing the saved list", () => {
+    const savedCvs = Array.from({ length: 12 }, (_, index) => ({
+      id: `cv-${index}`,
+      type: "cv" as const,
+      name: `CV ${index}`,
+      createdAt: index,
+      updatedAt: 100 - index,
+      templateId: "minimal-professional",
+      draft: emptyCvDraft()
+    }));
+
+    expect(getRecentSavedCvs(savedCvs).map(cv => cv.id)).toEqual([
+      "cv-11", "cv-10", "cv-9", "cv-8", "cv-7", "cv-6", "cv-5", "cv-4", "cv-3", "cv-2"
+    ]);
+    expect(savedCvs[0].id).toBe("cv-0");
   });
 
   describe("CV single-page print fit", () => {
